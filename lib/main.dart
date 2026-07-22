@@ -18,5 +18,5 @@ Future<void> main() async {
 }
 
 Future<void> initAppDependencies() async {
-  // Add any async initialization here
+  // Add any async initialization here 
 }

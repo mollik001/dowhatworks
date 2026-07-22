@@ -11,14 +11,17 @@ class QuestionnaireView extends GetView<QuestionnaireController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFF0A0A0A),
       body: PageView.builder(
         controller: controller.pageController,
         onPageChanged: controller.onPageChanged,
-        itemCount: controller.questions.length,
-        itemBuilder: (context, index) {
-          final question = controller.questions[index];
-          final isLast = index == controller.questions.length - 1;
+        itemCount: controller.pages.length,
+        itemBuilder: (context, pageIndex) {
+          final page = controller.pages[pageIndex];
+          final pageQuestions = page.questionIds
+              .map(controller.getQuestion)
+              .whereType<Question>()
+              .toList();
           return SingleChildScrollView(
             padding: EdgeInsets.symmetric(horizontal: 24.w),
             child: Column(
@@ -26,7 +29,7 @@ class QuestionnaireView extends GetView<QuestionnaireController> {
               children: [
                 SizedBox(height: 65.h),
                 Text(
-                  'Belief audit · ${index + 1} of ${controller.questions.length}',
+                  'Belief audit · ${pageIndex + 1} of ${controller.pages.length}',
                   style: TextStyle(
                     fontFamily: 'IBM Plex Sans',
                     fontWeight: FontWeight.w400,
@@ -38,7 +41,7 @@ class QuestionnaireView extends GetView<QuestionnaireController> {
                 ),
                 SizedBox(height: 16.h),
                 Text(
-                  question.title,
+                  page.title,
                   style: TextStyle(
                     fontFamily: 'IBM Plex Sans',
                     fontWeight: FontWeight.w400,
@@ -50,27 +53,65 @@ class QuestionnaireView extends GetView<QuestionnaireController> {
                 ),
                 SizedBox(height: 8.h),
                 Text(
-                  question.subtitle,
+                  page.subtitle,
                   style: TextStyle(
                     fontFamily: 'IBM Plex Sans',
                     fontWeight: FontWeight.w400,
                     fontSize: 14.sp,
                     height: 1.0,
                     letterSpacing: 0,
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: Colors.white.withValues(alpha: 0.6),
                   ),
                 ),
                 SizedBox(height: 24.h),
                 DashIndicator(
-                  currentPage: index,
-                  totalPages: controller.questions.length,
+                  currentPage: pageIndex,
+                  totalPages: controller.pages.length,
                 ),
                 SizedBox(height: 32.h),
-                _buildQuestionInput(question),
-                SizedBox(height: 24.h),
+                ...pageQuestions.map((question) => Padding(
+                  padding: EdgeInsets.only(bottom: 28.h),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        question.title,
+                        style: TextStyle(
+                          fontFamily: 'IBM Plex Sans',
+                          fontWeight: FontWeight.w400,
+                          fontSize: 16.sp,
+                          height: 20.63 / 16,
+                          letterSpacing: 0,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 24.h),
+                      _buildQuestionInput(question),
+                    ],
+                  ),
+                )),
+                SizedBox(height: 16.h),
                 CustomButton(
-                  text: isLast ? 'FINISH' : 'NEXT',
+                  text: 'Next',
                   onPressed: () => controller.nextPage(),
+                ),
+                SizedBox(height: 16.h),
+                Center(
+                  child: GestureDetector(
+                    onTap: () => controller.skip(),
+                    child: Text(
+                      'Skip',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans',
+                        fontWeight: FontWeight.w400,
+                        fontSize: 14.sp,
+                        height: 16.5 / 14,
+                        letterSpacing: 0,
+                        color: Colors.white.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ),
                 ),
                 SizedBox(height: 70.h),
               ],
@@ -83,36 +124,82 @@ class QuestionnaireView extends GetView<QuestionnaireController> {
 
   Widget _buildQuestionInput(Question question) {
     if (question.options != null && question.options!.isNotEmpty) {
-      return Column(
-        children: question.options!.map((option) {
-          final isSelected = controller.selectedOptions[question.id] == option;
-          return GestureDetector(
-            onTap: () => controller.selectOption(question.id, option),
-            child: Container(
-              width: double.infinity,
-              margin: EdgeInsets.only(bottom: 12.h),
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-              decoration: BoxDecoration(
-                color: isSelected ? const Color(0x33F16B3A) : const Color(0xFF1A1A1A),
-                border: Border.all(
-                  color: isSelected ? const Color(0xFFF16B3A) : const Color(0xFF5A5A5A),
+      return Obx(
+        () => Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: question.options!.map((option) {
+            final isSelected = controller.selectedOptions[question.id] == option;
+            final labelIndex = question.options!.indexOf(option);
+            final labels = const ['Strong no', 'No', 'Neutral', 'Yes', 'Strong Yes'];
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 3.w),
+                child: Column(
+                  children: [
+                    GestureDetector(
+                      onTap: () => controller.selectOption(question.id, option),
+                      child: Container(
+                        width: double.infinity,
+                        height: 36.h,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F0F0F),
+                          border: Border.all(color: const Color(0xFF5A5A5A)),
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        child: Center(
+                          child: isSelected
+                              ? Container(
+                                  width: 11.w,
+                                  height: 11.h,
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Color(0xFFF26B3A),
+                                  ),
+                                )
+                              : Container(
+                                  width: 11.w,
+                                  height: 11.h,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white.withValues(alpha: 0.3),
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Container(
+                                      width: 4.w,
+                                      height: 4.h,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Colors.white.withValues(alpha: 0.3),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    Text(
+                      labels.length > labelIndex
+                          ? labels[labelIndex]
+                          : option,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'IBM Plex Sans',
+                        fontWeight: FontWeight.w400,
+                        fontSize: 11.sp,
+                        height: 1.23,
+                        letterSpacing: -0.22.sp,
+                        color: Colors.white.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ],
                 ),
-                borderRadius: BorderRadius.circular(8.r),
               ),
-              child: Text(
-                option,
-                style: TextStyle(
-                  fontFamily: 'IBM Plex Sans',
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                  fontSize: 14.sp,
-                  height: 1.0,
-                  letterSpacing: 0,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       );
     }
     return Container(

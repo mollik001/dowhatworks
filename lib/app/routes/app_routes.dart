@@ -8,4 +8,11 @@ class AppRoutes {
   static const String authResetPassword = '/auth/reset-password';
   static const String home = '/home';
   static const String questionnaire = '/questionnaire';
+  static const String game = '/game';
+  static const String digitSpan = '/digit-span';
+  static const String stroopIntro = '/stroop-intro';
+  static const String stroopGame = '/stroop-game';
+  static const String sustainedResponseIntro = '/sustained-response-intro';
+  static const String sustainedResponseGame = '/sustained-response-game';
+  static const String testComplete = '/test-complete';
 }

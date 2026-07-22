@@ -14,6 +14,13 @@ import '../modules/onboarding/bindings/onboarding_binding.dart';
 import '../modules/onboarding/views/onboarding_view.dart';
 import '../modules/questionnaire/bindings/questionnaire_binding.dart';
 import '../modules/questionnaire/views/questionnaire_view.dart';
+import '../modules/questionnaire/views/game_view.dart';
+import '../modules/questionnaire/views/digit_span_view.dart';
+import '../modules/questionnaire/views/stroop_intro_view.dart';
+import '../modules/questionnaire/views/stroop_game_view.dart';
+import '../modules/questionnaire/views/sustained_response_intro_view.dart';
+import '../modules/questionnaire/views/sustained_response_game_view.dart';
+import '../modules/questionnaire/views/test_complete_view.dart';
 import '../modules/splash/views/splash_view.dart';
 import 'app_routes.dart';
 
@@ -80,6 +87,48 @@ class AppPages {
       binding: QuestionnaireBinding(),
       transition: Transition.cupertino,
       transitionDuration: const Duration(milliseconds: 400),
+    ),
+    GetPage(
+      name: AppRoutes.game,
+      page: () => const GameView(),
+      transition: Transition.fadeIn,
+      transitionDuration: const Duration(milliseconds: 500),
+    ),
+    GetPage(
+      name: AppRoutes.digitSpan,
+      page: () => const DigitSpanView(),
+      transition: Transition.cupertino,
+      transitionDuration: const Duration(milliseconds: 400),
+    ),
+    GetPage(
+      name: AppRoutes.stroopIntro,
+      page: () => const StroopIntroView(),
+      transition: Transition.cupertino,
+      transitionDuration: const Duration(milliseconds: 400),
+    ),
+    GetPage(
+      name: AppRoutes.stroopGame,
+      page: () => const StroopGameView(),
+      transition: Transition.cupertino,
+      transitionDuration: const Duration(milliseconds: 400),
+    ),
+    GetPage(
+      name: AppRoutes.sustainedResponseIntro,
+      page: () => const SustainedResponseIntroView(),
+      transition: Transition.cupertino,
+      transitionDuration: const Duration(milliseconds: 400),
+    ),
+    GetPage(
+      name: AppRoutes.sustainedResponseGame,
+      page: () => const SustainedResponseGameView(),
+      transition: Transition.cupertino,
+      transitionDuration: const Duration(milliseconds: 400),
+    ),
+    GetPage(
+      name: AppRoutes.testComplete,
+      page: () => const TestCompleteView(),
+      transition: Transition.fadeIn,
+      transitionDuration: const Duration(milliseconds: 500),
     ),
   ];
 }

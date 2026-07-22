@@ -20,6 +20,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       fontFamily: fontFamily,
+      scaffoldBackgroundColor: const Color(0xFF0A0A0A),
       colorScheme: ColorScheme.fromSeed(
         seedColor: primaryColor,
         brightness: Brightness.dark,
