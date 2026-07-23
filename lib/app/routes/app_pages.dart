@@ -1,5 +1,7 @@
+import 'package:dowhatworks/app/modules/auth/bindings/forgot_password_binding.dart';
 import 'package:get/get.dart';
-import '../modules/auth/bindings/forgot_password_binding.dart';
+import '../modules/daily_checkin/bindings/daily_checkin_binding.dart';
+import '../modules/daily_checkin/views/daily_checkin_view.dart';
 import '../modules/auth/bindings/otp_binding.dart';
 import '../modules/auth/bindings/reset_password_binding.dart';
 import '../modules/auth/bindings/signup_binding.dart';
@@ -129,6 +131,13 @@ class AppPages {
       page: () => const TestCompleteView(),
       transition: Transition.fadeIn,
       transitionDuration: const Duration(milliseconds: 500),
+    ),
+    GetPage(
+      name: AppRoutes.dailyCheckin,
+      page: () => const DailyCheckinView(),
+      binding: DailyCheckinBinding(),
+      transition: Transition.cupertino,
+      transitionDuration: const Duration(milliseconds: 400),
     ),
   ];
 }

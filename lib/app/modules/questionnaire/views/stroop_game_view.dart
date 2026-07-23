@@ -92,12 +92,12 @@ class _StroopGameViewState extends State<StroopGameView> {
                   SizedBox(width: 12.w),
                   Expanded(
                     child: Text(
-                      'Cognitive baseline test...',
+                      'Cognitive baseline test',
                       style: TextStyle(
                         fontFamily: 'IBM Plex Sans',
                         fontWeight: FontWeight.w400,
                         fontSize: 16.sp,
-                        height: 16.5 / 16,
+                        height: 1.25,
                         letterSpacing: 0,
                         color: const Color(0xFFFF8A5B),
                       ),

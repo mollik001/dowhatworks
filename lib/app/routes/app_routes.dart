@@ -15,4 +15,5 @@ class AppRoutes {
   static const String sustainedResponseIntro = '/sustained-response-intro';
   static const String sustainedResponseGame = '/sustained-response-game';
   static const String testComplete = '/test-complete';
+  static const String dailyCheckin = '/daily-checkin';
 }
