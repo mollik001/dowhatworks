@@ -1,4 +1,13 @@
 import 'package:dowhatworks/app/modules/auth/bindings/forgot_password_binding.dart';
+import 'package:dowhatworks/app/modules/custom_protocol/bindings/custom_protocol_binding.dart';
+import 'package:dowhatworks/app/modules/custom_protocol/views/custom_protocol_view.dart';
+import 'package:dowhatworks/app/modules/custom_protocol/views/custom_protocol_action_view.dart';
+import 'package:dowhatworks/app/modules/custom_protocol/views/custom_protocol_metric_view.dart';
+import 'package:dowhatworks/app/modules/custom_protocol/views/custom_protocol_launch_view.dart';
+import 'package:dowhatworks/app/modules/experiment_detail/bindings/experiment_detail_binding.dart';
+import 'package:dowhatworks/app/modules/experiment_detail/views/experiment_detail_view.dart';
+import 'package:dowhatworks/app/modules/profile/bindings/profile_binding.dart';
+import 'package:dowhatworks/app/modules/profile/views/profile_view.dart';
 import 'package:get/get.dart';
 import '../modules/daily_checkin/bindings/daily_checkin_binding.dart';
 import '../modules/daily_checkin/views/daily_checkin_view.dart';
@@ -10,6 +19,7 @@ import '../modules/auth/views/otp_view.dart';
 import '../modules/auth/views/reset_password_view.dart';
 import '../modules/auth/views/signin_view.dart';
 import '../modules/auth/views/signup_view.dart';
+import '../modules/home/widgets/main_screen.dart';
 import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/home_view.dart';
 import '../modules/onboarding/bindings/onboarding_binding.dart';
@@ -78,10 +88,27 @@ class AppPages {
     ),
     GetPage(
       name: AppRoutes.home,
-      page: () => const HomeView(),
-      binding: HomeBinding(),
-      transition: Transition.cupertino,
-      transitionDuration: const Duration(milliseconds: 400),
+      page: () => const MainScreen(initialIndex: 0),
+      transition: Transition.fadeIn,
+      transitionDuration: const Duration(milliseconds: 300),
+    ),
+    GetPage(
+      name: AppRoutes.daniel,
+      page: () => const MainScreen(initialIndex: 1),
+      transition: Transition.fadeIn,
+      transitionDuration: const Duration(milliseconds: 250),
+    ),
+    GetPage(
+      name: AppRoutes.lab,
+      page: () => const MainScreen(initialIndex: 2),
+      transition: Transition.fadeIn,
+      transitionDuration: const Duration(milliseconds: 250),
+    ),
+    GetPage(
+      name: AppRoutes.results,
+      page: () => const MainScreen(initialIndex: 3),
+      transition: Transition.fadeIn,
+      transitionDuration: const Duration(milliseconds: 250),
     ),
     GetPage(
       name: AppRoutes.questionnaire,
@@ -136,6 +163,48 @@ class AppPages {
       name: AppRoutes.dailyCheckin,
       page: () => const DailyCheckinView(),
       binding: DailyCheckinBinding(),
+      transition: Transition.cupertino,
+      transitionDuration: const Duration(milliseconds: 400),
+    ),
+    GetPage(
+      name: AppRoutes.customProtocol,
+      page: () => const CustomProtocolView(),
+      binding: CustomProtocolBinding(),
+      transition: Transition.cupertino,
+      transitionDuration: const Duration(milliseconds: 400),
+    ),
+    GetPage(
+      name: AppRoutes.customProtocolAction,
+      page: () => const CustomProtocolActionView(),
+      binding: CustomProtocolBinding(),
+      transition: Transition.cupertino,
+      transitionDuration: const Duration(milliseconds: 400),
+    ),
+    GetPage(
+      name: AppRoutes.customProtocolMetric,
+      page: () => const CustomProtocolMetricView(),
+      binding: CustomProtocolBinding(),
+      transition: Transition.cupertino,
+      transitionDuration: const Duration(milliseconds: 400),
+    ),
+    GetPage(
+      name: AppRoutes.customProtocolLaunch,
+      page: () => const CustomProtocolLaunchView(),
+      binding: CustomProtocolBinding(),
+      transition: Transition.cupertino,
+      transitionDuration: const Duration(milliseconds: 400),
+    ),
+    GetPage(
+      name: AppRoutes.experimentDetail,
+      page: () => const ExperimentDetailView(),
+      binding: ExperimentDetailBinding(),
+      transition: Transition.cupertino,
+      transitionDuration: const Duration(milliseconds: 400),
+    ),
+    GetPage(
+      name: AppRoutes.profile,
+      page: () => const ProfileView(),
+      binding: ProfileBinding(),
       transition: Transition.cupertino,
       transitionDuration: const Duration(milliseconds: 400),
     ),

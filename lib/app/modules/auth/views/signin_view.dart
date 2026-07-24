@@ -107,7 +107,7 @@ class SigninView extends GetView<SignupController> {
             SizedBox(height: 24.h),
             CustomButton(
               text: 'Sign In',
-              onPressed: () {},
+              onPressed: () => Get.offAllNamed(AppRoutes.questionnaire),
             ),
             SizedBox(height: 16.h),
             CustomButton(

@@ -10,7 +10,7 @@ class SignupController extends GetxController {
   final confirmPasswordController = TextEditingController();
 
   void signUp() {
-    // TODO: implement sign up logic
+    Get.offAllNamed(AppRoutes.questionnaire);
   }
 
   void signIn() {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:dowhatworks/app/routes/app_routes.dart';
 
 class OnboardingController extends GetxController {
   final currentPage = 0.obs;
@@ -16,7 +17,7 @@ class OnboardingController extends GetxController {
         curve: Curves.easeInOut,
       );
     } else {
-      Get.offAllNamed('/home');
+      Get.offAllNamed(AppRoutes.authSignup);
     }
   }
 
@@ -30,7 +31,7 @@ class OnboardingController extends GetxController {
   }
 
   void skip() {
-    Get.offAllNamed('/home');
+    Get.offAllNamed(AppRoutes.authSignup);
   }
 
   @override

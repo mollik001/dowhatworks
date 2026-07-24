@@ -22,27 +22,42 @@ class DailyCheckinView extends GetView<DailyCheckinController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF080808),
-      body: SafeArea(
-        bottom: false,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(context),
-              _buildDivider(),
-              SizedBox(height: 24.h),
-              _buildCard(),
-              SizedBox(height: 24.h),
-            ],
+      backgroundColor: const Color(0xFF0A0A0A),
+      body: Stack(
+        children: [
+          Positioned(
+            top: 0,
+            right: 0,
+            child: _buildTopRightGradient(),
           ),
-        ),
+          SafeArea(
+            bottom: false,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(context),
+                  _buildDivider(),
+                  SizedBox(height: 24.h),
+                  _buildCard(),
+                  SizedBox(height: 24.h),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: CustomNavBar(
         selectedIndex: 0,
         onItemTap: (index) {
           if (index == 0) {
             Get.offNamed(AppRoutes.home);
+          } else if (index == 1) {
+            Get.offNamed(AppRoutes.daniel);
+          } else if (index == 2) {
+            Get.offNamed(AppRoutes.lab);
+          } else if (index == 3) {
+            Get.offNamed(AppRoutes.results);
           } else {
             Get.snackbar(
               'Coming soon',
@@ -53,6 +68,23 @@ class DailyCheckinView extends GetView<DailyCheckinController> {
             );
           }
         },
+      ),
+    );
+  }
+
+  Widget _buildTopRightGradient() {
+    return Container(
+      width: 200.w,
+      height: 200.h,
+      decoration: BoxDecoration(
+        gradient: RadialGradient(
+          center: Alignment.topRight,
+          radius: 1,
+          colors: [
+            const Color(0xFF1B110D),
+            const Color(0xFF1B110D).withValues(alpha: 0),
+          ],
+        ),
       ),
     );
   }
@@ -122,22 +154,25 @@ class DailyCheckinView extends GetView<DailyCheckinController> {
           ),
         ),
         SizedBox(width: 12.w),
-        Container(
-          width: 32.w,
-          height: 32.w,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFF843D23), width: 1.5),
-            color: const Color(0xFF3A1E14),
-          ),
-          child: Center(
-            child: Text(
-              'F',
-              style: TextStyle(
-                color: const Color(0xFFFF8A5B),
-                fontFamily: 'IBM Plex Sans',
-                fontWeight: FontWeight.w400,
-                fontSize: 14.sp,
+        GestureDetector(
+          onTap: () => Get.toNamed(AppRoutes.profile),
+          child: Container(
+            width: 32.w,
+            height: 32.w,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFF843D23), width: 1.5),
+              color: const Color(0xFF3A1E14),
+            ),
+            child: Center(
+              child: Text(
+                'F',
+                style: TextStyle(
+                  color: const Color(0xFFFF8A5B),
+                  fontFamily: 'IBM Plex Sans',
+                  fontWeight: FontWeight.w400,
+                  fontSize: 14.sp,
+                ),
               ),
             ),
           ),

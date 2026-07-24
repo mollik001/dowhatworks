@@ -1,46 +1,22 @@
-import 'package:dowhatworks/app/modules/home/controllers/home_controller.dart';
-import 'package:dowhatworks/app/modules/home/widgets/custom_navbar.dart';
 import 'package:dowhatworks/app/routes/app_routes.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 
-class HomeView extends GetView<HomeController> {
+class HomeView extends StatelessWidget {
   const HomeView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF080808),
-      body: SafeArea(
-        bottom: false,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(context),
-              _buildDivider(),
-              SizedBox(height: 24.h),
-              _buildContentSection(),
-            ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: CustomNavBar(
-        selectedIndex: 0,
-        onItemTap: (index) {
-          if (index == 0) {
-            Get.offNamed(AppRoutes.home);
-          } else {
-            Get.snackbar(
-              'Coming soon',
-              'This screen is under development',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: const Color(0xFF1A1A1A),
-              colorText: Colors.white,
-            );
-          }
-        },
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(context),
+          _buildDivider(),
+          SizedBox(height: 24.h),
+          _buildContentSection(),
+        ],
       ),
     );
   }
@@ -295,22 +271,25 @@ class HomeView extends GetView<HomeController> {
           ),
         ),
         SizedBox(width: 12.w),
-        Container(
-          width: 32.w,
-          height: 32.w,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFF843D23), width: 1.5),
-            color: const Color(0xFF3A1E14),
-          ),
-          child: Center(
-            child: Text(
-              'F',
-              style: TextStyle(
-                color: const Color(0xFFFF8A5B),
-                fontFamily: 'IBM Plex Sans',
-                fontWeight: FontWeight.w400,
-                fontSize: 14.sp,
+        GestureDetector(
+          onTap: () => Get.toNamed(AppRoutes.profile),
+          child: Container(
+            width: 32.w,
+            height: 32.w,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFF843D23), width: 1.5),
+              color: const Color(0xFF3A1E14),
+            ),
+            child: Center(
+              child: Text(
+                'F',
+                style: TextStyle(
+                  color: const Color(0xFFFF8A5B),
+                  fontFamily: 'IBM Plex Sans',
+                  fontWeight: FontWeight.w400,
+                  fontSize: 14.sp,
+                ),
               ),
             ),
           ),
