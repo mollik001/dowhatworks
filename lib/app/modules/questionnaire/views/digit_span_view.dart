@@ -162,8 +162,11 @@ class DigitSpanGameView extends StatefulWidget {
 
 class _DigitSpanGameViewState extends State<DigitSpanGameView> {
   static const int maxAttempts = 2;
+  static const int maxLevel = 9;
   int level = 3;
   int attempt = 1;
+  // The last successfully recalled length; floor is 3 per doc.
+  int capacityScore = 3;
 
   List<String> digits = [];
   int currentDigitIndex = 0;
@@ -210,28 +213,46 @@ class _DigitSpanGameViewState extends State<DigitSpanGameView> {
     }
   }
 
+  void _finishGame(int score) {
+    print('[DigitSpan] Game over — capacity_score = $score');
+    Get.offAllNamed(
+      AppRoutes.stroopIntro,
+      arguments: {'capacity_score': score},
+    );
+  }
+
   void _submitAnswer() {
     final correct = userAnswer == digits.join('');
     if (correct) {
-      setState(() {
-        level++;
-        attempt = 1;
-      });
+      // Store the just-recalled level as the new capacity score
+      final newScore = level.clamp(3, maxLevel);
+      capacityScore = newScore;
+      print('[DigitSpan] Correct! capacity_score updated to $capacityScore, advancing to level ${level + 1}');
+
+      if (level >= maxLevel) {
+        _finishGame(maxLevel);
+        return;
+      }
+
+      // Reset attempt BEFORE calling setState so UI shows 1 immediately
+      attempt = 1;
+      level++;
+      setState(() {});
       _startLevel();
     } else {
-      setState(() {
-        attempt++;
-      });
+      attempt++;
+      print('[DigitSpan] Wrong. attempt=$attempt, capacityScore=$capacityScore');
       if (attempt > maxAttempts) {
-        Get.offAllNamed(AppRoutes.stroopIntro);
+        _finishGame(capacityScore);
       } else {
+        setState(() {});
         _startLevel();
       }
     }
   }
 
   void _skipTest() {
-    Get.offAllNamed(AppRoutes.stroopIntro);
+    _finishGame(capacityScore);
   }
 
   @override

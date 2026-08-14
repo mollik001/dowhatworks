@@ -1,16 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:dowhatworks/app/routes/app_routes.dart';
+import '../../../data/repositories/auth_repository.dart';
+import '../../../data/services/storage_service.dart';
+import '../../../routes/app_routes.dart';
 
 class ResetPasswordController extends GetxController {
+  final AuthRepository _authRepository = AuthRepository();
+
   final newPasswordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
-  void updatePassword() {
-    if (newPasswordController.text.isEmpty || confirmPasswordController.text.isEmpty) {
+  final isLoading = false.obs;
+  final token = ''.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    if (Get.arguments != null && Get.arguments is Map && Get.arguments.containsKey('token')) {
+      token.value = Get.arguments['token'] ?? '';
+    }
+  }
+
+  Future<void> updatePassword() async {
+    final password = newPasswordController.text;
+    final confirmPassword = confirmPasswordController.text;
+
+    if (password.isEmpty || confirmPassword.isEmpty) {
       Get.snackbar(
-        'Error',
+        'Validation Error',
         'Please fill in all fields',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
@@ -18,9 +35,10 @@ class ResetPasswordController extends GetxController {
       );
       return;
     }
-    if (newPasswordController.text != confirmPasswordController.text) {
+
+    if (password != confirmPassword) {
       Get.snackbar(
-        'Error',
+        'Validation Error',
         'Passwords do not match',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
@@ -29,53 +47,30 @@ class ResetPasswordController extends GetxController {
       return;
     }
 
-    Get.defaultDialog(
-      title: '',
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.check_circle, color: Colors.green, size: 60.sp),
-          SizedBox(height: 16.h),
-          Text(
-            'Password Updated',
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans',
-              fontWeight: FontWeight.w700,
-              fontSize: 18.sp,
-              color: Colors.white,
-            ),
-          ),
-          SizedBox(height: 8.h),
-          Text(
-            'Your password has been reset successfully',
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans',
-              fontWeight: FontWeight.w400,
-              fontSize: 14.sp,
-              color: const Color(0xFFD1D1D1),
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-      confirm: TextButton(
-        onPressed: () {
-          Get.back();
-          Get.offAllNamed(AppRoutes.authSignin);
-        },
-        child: Text(
-          'Continue',
-          style: TextStyle(
-            fontFamily: 'IBM Plex Sans',
-            fontWeight: FontWeight.w700,
-            fontSize: 14.sp,
-            color: Colors.white,
-          ),
-        ),
-      ),
-      backgroundColor: const Color(0xFF1A1A1A),
-      radius: 16.r,
-    );
+    final tokenToUse = token.value.isNotEmpty
+        ? token.value
+        : (StorageService.getAccessToken() ?? '');
+
+    try {
+      isLoading.value = true;
+      await _authRepository.resetPassword(
+        token: tokenToUse,
+        password: password,
+        confirmPassword: confirmPassword,
+      );
+
+      Get.offAllNamed(AppRoutes.authSignin);
+    } catch (e) {
+      Get.snackbar(
+        'Password Reset Failed',
+        e.toString(),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   @override

@@ -76,7 +76,7 @@ class StroopIntroView extends StatelessWidget {
             SizedBox(height: 40.h),
             Center(
               child: GestureDetector(
-                onTap: () => Get.toNamed(AppRoutes.stroopGame),
+                onTap: () => Get.toNamed(AppRoutes.stroopGame, arguments: Get.arguments),
                 child: Container(
                   width: 150.w,
                   height: 50.h,

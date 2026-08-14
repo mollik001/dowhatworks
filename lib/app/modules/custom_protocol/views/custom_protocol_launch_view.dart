@@ -1,5 +1,6 @@
 import 'package:dowhatworks/app/modules/custom_protocol/controllers/custom_protocol_controller.dart';
 import 'package:dowhatworks/app/modules/home/widgets/custom_navbar.dart';
+import 'package:dowhatworks/app/data/services/user_service.dart';
 import 'package:dowhatworks/app/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -207,8 +208,8 @@ class CustomProtocolLaunchView extends GetView<CustomProtocolController> {
                   ),
                   SizedBox(height: 8.h),
                   Text(
-                    controller.selectedMetrics.isNotEmpty
-                        ? controller.selectedMetrics.join(', ')
+                    controller.selectedMetric.value.isNotEmpty
+                        ? controller.selectedMetric.value
                         : 'Sleep quality',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.85),
@@ -316,40 +317,54 @@ class CustomProtocolLaunchView extends GetView<CustomProtocolController> {
                 ),
               ),
               const Spacer(),
-              IntrinsicWidth(
-                child: GestureDetector(
-                  onTap: () => Get.offNamed(AppRoutes.lab),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16.r),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Launch experiment',
-                          style: TextStyle(
-                            color: const Color(0xFF0A0A0B),
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w400,
-                            fontSize: 13.sp,
-                            height: 1.5,
-                            letterSpacing: 0,
-                          ),
-                        ),
-                        SizedBox(width: 6.w),
-                        Icon(
-                          Icons.arrow_forward,
-                          color: Colors.black,
-                          size: 16.sp,
-                        ),
-                      ],
+              Obx(() {
+                final loading = controller.isLaunching.value;
+                return IntrinsicWidth(
+                  child: GestureDetector(
+                    onTap: loading ? null : controller.launchExperiment,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                      decoration: BoxDecoration(
+                        color: loading
+                            ? Colors.white.withValues(alpha: 0.4)
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(16.r),
+                      ),
+                      child: loading
+                          ? SizedBox(
+                              width: 18.w,
+                              height: 18.w,
+                              child: const CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.black,
+                              ),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Launch experiment',
+                                  style: TextStyle(
+                                    color: const Color(0xFF0A0A0B),
+                                    fontFamily: 'Inter',
+                                    fontWeight: FontWeight.w400,
+                                    fontSize: 13.sp,
+                                    height: 1.5,
+                                    letterSpacing: 0,
+                                  ),
+                                ),
+                                SizedBox(width: 6.w),
+                                Icon(
+                                  Icons.arrow_forward,
+                                  color: Colors.black,
+                                  size: 16.sp,
+                                ),
+                              ],
+                            ),
                     ),
                   ),
-                ),
-              ),
+                );
+              }),
             ],
           ),
           SizedBox(height: 32.h),
@@ -484,15 +499,15 @@ class CustomProtocolLaunchView extends GetView<CustomProtocolController> {
               color: const Color(0xFF3A1E14),
             ),
             child: Center(
-              child: Text(
-                'F',
+              child: Obx(() => Text(
+                UserService.to.initial,
                 style: TextStyle(
                   color: const Color(0xFFFF8A5B),
                   fontFamily: 'IBM Plex Sans',
                   fontWeight: FontWeight.w400,
                   fontSize: 14.sp,
                 ),
-              ),
+              )),
             ),
           ),
         ),

@@ -1,5 +1,6 @@
 import 'package:dowhatworks/app/modules/custom_protocol/controllers/custom_protocol_controller.dart';
 import 'package:dowhatworks/app/modules/home/widgets/custom_navbar.dart';
+import 'package:dowhatworks/app/data/services/user_service.dart';
 import 'package:dowhatworks/app/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -148,25 +149,23 @@ class CustomProtocolMetricView extends GetView<CustomProtocolController> {
             ),
           ),
           SizedBox(height: 16.h),
-          GetBuilder<CustomProtocolController>(
-            id: 'metrics',
-            builder: (controller) {
-              return GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: metrics.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12.w,
-                  mainAxisSpacing: 12.h,
-                  childAspectRatio: 2.5,
-                ),
-                itemBuilder: (context, index) {
-                  final metric = metrics[index];
-                  final isSelected = controller.selectedMetrics.contains(metric);
-                  return GestureDetector(
-                    onTap: () => controller.toggleMetric(metric),
-                    child: Container(
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: metrics.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12.w,
+              mainAxisSpacing: 12.h,
+              childAspectRatio: 2.5,
+            ),
+            itemBuilder: (context, index) {
+              final metric = metrics[index];
+              return Obx(() {
+                final isSelected = controller.selectedMetric.value == metric;
+                return GestureDetector(
+                  onTap: () => controller.selectMetric(metric),
+                  child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
                       color: isSelected
@@ -186,8 +185,8 @@ class CustomProtocolMetricView extends GetView<CustomProtocolController> {
                         children: [
                           Icon(
                             isSelected
-                                ? Icons.check_circle
-                                : Icons.circle_outlined,
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_off,
                             color: isSelected
                                 ? const Color(0xFFF26B3A)
                                 : Colors.white.withValues(alpha: 0.65),
@@ -214,10 +213,23 @@ class CustomProtocolMetricView extends GetView<CustomProtocolController> {
                     ),
                   ),
                 );
-              },
-            );
-          }),
+              });
+            },
+          ),
           SizedBox(height: 24.h),
+          Obx(() => controller.metricError.value.isNotEmpty
+              ? Padding(
+                  padding: EdgeInsets.only(bottom: 8.h, left: 4.w),
+                  child: Text(
+                    controller.metricError.value,
+                    style: TextStyle(
+                      color: const Color(0xFFF87171),
+                      fontFamily: 'IBM Plex Sans',
+                      fontSize: 11.sp,
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink()),
           Row(
             children: [
               IntrinsicWidth(
@@ -258,7 +270,10 @@ class CustomProtocolMetricView extends GetView<CustomProtocolController> {
               const Spacer(),
               IntrinsicWidth(
                 child: GestureDetector(
-                  onTap: () => Get.toNamed(AppRoutes.customProtocolLaunch),
+                  onTap: () => controller.validateAndNext(
+                    field: 'metric',
+                    route: AppRoutes.customProtocolLaunch,
+                  ),
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
                     decoration: BoxDecoration(
@@ -424,15 +439,15 @@ class CustomProtocolMetricView extends GetView<CustomProtocolController> {
               color: const Color(0xFF3A1E14),
             ),
             child: Center(
-              child: Text(
-                'F',
+              child: Obx(() => Text(
+                UserService.to.initial,
                 style: TextStyle(
                   color: const Color(0xFFFF8A5B),
                   fontFamily: 'IBM Plex Sans',
                   fontWeight: FontWeight.w400,
                   fontSize: 14.sp,
                 ),
-              ),
+              )),
             ),
           ),
         ),

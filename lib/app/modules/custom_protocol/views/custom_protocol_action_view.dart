@@ -1,5 +1,6 @@
 import 'package:dowhatworks/app/modules/custom_protocol/controllers/custom_protocol_controller.dart';
 import 'package:dowhatworks/app/modules/home/widgets/custom_navbar.dart';
+import 'package:dowhatworks/app/data/services/user_service.dart';
 import 'package:dowhatworks/app/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -154,10 +155,9 @@ class CustomProtocolActionView extends GetView<CustomProtocolController> {
               border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
             ),
             child: TextField(
-              controller: TextEditingController(
-                text: 'Do not open any social media apps after 8:00 PM.',
-              ),
+              controller: controller.actionController,
               maxLines: null,
+              onChanged: (_) => controller.actionError.value = '',
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.85),
                 fontFamily: 'Inter',
@@ -182,6 +182,19 @@ class CustomProtocolActionView extends GetView<CustomProtocolController> {
               ),
             ),
           ),
+          Obx(() => controller.actionError.value.isNotEmpty
+              ? Padding(
+                  padding: EdgeInsets.only(top: 6.h, left: 4.w),
+                  child: Text(
+                    controller.actionError.value,
+                    style: TextStyle(
+                      color: const Color(0xFFF87171),
+                      fontFamily: 'IBM Plex Sans',
+                      fontSize: 11.sp,
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink()),
           SizedBox(height: 24.h),
           Row(
             children: [
@@ -223,7 +236,10 @@ class CustomProtocolActionView extends GetView<CustomProtocolController> {
               const Spacer(),
               IntrinsicWidth(
                 child: GestureDetector(
-                  onTap: () => Get.toNamed(AppRoutes.customProtocolMetric),
+                  onTap: () => controller.validateAndNext(
+                    field: 'action',
+                    route: AppRoutes.customProtocolMetric,
+                  ),
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
                     decoration: BoxDecoration(
@@ -389,15 +405,15 @@ class CustomProtocolActionView extends GetView<CustomProtocolController> {
               color: const Color(0xFF3A1E14),
             ),
             child: Center(
-              child: Text(
-                'F',
+              child: Obx(() => Text(
+                UserService.to.initial,
                 style: TextStyle(
                   color: const Color(0xFFFF8A5B),
                   fontFamily: 'IBM Plex Sans',
                   fontWeight: FontWeight.w400,
                   fontSize: 14.sp,
                 ),
-              ),
+              )),
             ),
           ),
         ),

@@ -76,7 +76,7 @@ class SustainedResponseIntroView extends StatelessWidget {
             SizedBox(height: 40.h),
             Center(
               child: GestureDetector(
-                onTap: () => Get.toNamed(AppRoutes.sustainedResponseGame),
+                onTap: () => Get.toNamed(AppRoutes.sustainedResponseGame, arguments: Get.arguments),
                 child: Container(
                   width: 150.w,
                   height: 50.h,

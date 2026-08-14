@@ -14,6 +14,7 @@ import '../modules/daily_checkin/views/daily_checkin_view.dart';
 import '../modules/auth/bindings/otp_binding.dart';
 import '../modules/auth/bindings/reset_password_binding.dart';
 import '../modules/auth/bindings/signup_binding.dart';
+import '../modules/auth/bindings/signin_binding.dart';
 import '../modules/auth/views/forgot_password_view.dart';
 import '../modules/auth/views/otp_view.dart';
 import '../modules/auth/views/reset_password_view.dart';
@@ -82,7 +83,7 @@ class AppPages {
     GetPage(
       name: AppRoutes.authSignin,
       page: () => const SigninView(),
-      binding: SignupBinding(),
+      binding: SigninBinding(),
       transition: Transition.cupertino,
       transitionDuration: const Duration(milliseconds: 400),
     ),

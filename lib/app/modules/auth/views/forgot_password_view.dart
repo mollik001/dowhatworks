@@ -78,9 +78,15 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
               keyboardType: TextInputType.emailAddress,
             ),
             SizedBox(height: 24.h),
-            CustomButton(
-              text: 'Reset Password',
-              onPressed: controller.resetPassword,
+            Obx(
+              () => controller.isLoading.value
+                  ? const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    )
+                  : CustomButton(
+                      text: 'Reset Password',
+                      onPressed: controller.submitForgotPassword,
+                    ),
             ),
             SizedBox(height: 70.h),
           ],

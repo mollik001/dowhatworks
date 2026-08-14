@@ -1,100 +1,111 @@
+import 'package:dowhatworks/app/data/models/experiment_models.dart';
 import 'package:dowhatworks/app/modules/results/controllers/results_controller.dart';
+import 'package:dowhatworks/app/data/services/user_service.dart';
 import 'package:dowhatworks/app/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
-class _OutlinedTrianglePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.black
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    final path = Path();
-    final center = size.center(Offset.zero);
-    final height = size.height * 0.7;
-    final halfWidth = size.width * 0.4;
-
-    path.moveTo(center.dx - halfWidth, center.dy + height / 2);
-    path.lineTo(center.dx + halfWidth, center.dy);
-    path.lineTo(center.dx - halfWidth, center.dy - height / 2);
-    path.close();
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
-}
-
-class ResultsView extends StatelessWidget {
+class ResultsView extends GetView<ResultsController> {
   const ResultsView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader(context),
-          _buildDivider(),
-          SizedBox(height: 24.h),
-          _buildContentSection(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContentSection() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 24.w),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: 16.h),
-          Text(
-            'Experiments',
-            style: TextStyle(
-              color: Colors.white,
-              fontFamily: 'IBM Plex Sans',
-              fontWeight: FontWeight.w400,
-              fontSize: 28.sp,
-              height: 1.5,
-              letterSpacing: 0,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _ResultsHeader(),
+        _Divider(),
+        Expanded(
+          child: RefreshIndicator(
+            color: const Color(0xFFFF8A5B),
+            backgroundColor: const Color(0xFF0F0F0F),
+            onRefresh: controller.loadExperiments,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.symmetric(horizontal: 24.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 24.h),
+                  Text(
+                    'Experiments',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontFamily: 'IBM Plex Sans',
+                      fontWeight: FontWeight.w400,
+                      fontSize: 28.sp,
+                      height: 1.5,
+                    ),
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    'Your behavioral evidence archive.',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.45),
+                      fontFamily: 'IBM Plex Sans',
+                      fontWeight: FontWeight.w400,
+                      fontSize: 13.sp,
+                      height: 1.5,
+                    ),
+                  ),
+                  SizedBox(height: 24.h),
+                  Obx(() {
+                    if (controller.isLoading.value) {
+                      return Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 60.h),
+                          child: const CircularProgressIndicator(
+                            color: Color(0xFFFF8A5B),
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      );
+                    }
+                    if (controller.experiments.isEmpty) {
+                      return _EmptyState();
+                    }
+                    return Column(
+                      children: [
+                        ...controller.experiments.map(
+                          (e) => Padding(
+                            padding: EdgeInsets.only(bottom: 16.h),
+                            child: e.isActive
+                                ? _ActiveCard(experiment: e)
+                                : _QueuedCard(experiment: e),
+                          ),
+                        ),
+                        _PrimeCard(),
+                        SizedBox(height: 32.h),
+                      ],
+                    );
+                  }),
+                ],
+              ),
             ),
           ),
-          SizedBox(height: 8.h),
-          Text(
-            'Your behavioral evidence archive.',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.45),
-              fontFamily: 'IBM Plex Sans',
-              fontWeight: FontWeight.w400,
-              fontSize: 13.sp,
-              height: 1.5,
-              letterSpacing: 0,
-            ),
-          ),
-          SizedBox(height: 24.h),
-          _buildExperimentCard(),
-          SizedBox(height: 16.h),
-          _buildQueuedCard(),
-          SizedBox(height: 16.h),
-          _buildPrimeCard(),
-          SizedBox(height: 32.h),
-        ],
-      ),
+        ),
+      ],
     );
   }
+}
 
-  Widget _buildExperimentCard() {
+// =============================================================================
+// ACTIVE EXPERIMENT CARD
+// =============================================================================
+
+class _ActiveCard extends StatelessWidget {
+  final Experiment experiment;
+  const _ActiveCard({required this.experiment});
+
+  @override
+  Widget build(BuildContext context) {
+    final totalDays = experiment.durationDays;
+    final elapsed = experiment.elapsedDays;
+    final progress = totalDays > 0 ? elapsed / totalDays : 0.0;
+
     return Container(
-      width: 357.w,
-      height: 277.h,
+      width: double.infinity,
       decoration: BoxDecoration(
         color: const Color(0xFF0C1612),
         borderRadius: BorderRadius.circular(22.r),
@@ -105,6 +116,7 @@ class ResultsView extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Icon + status
             Row(
               children: [
                 Container(
@@ -131,132 +143,125 @@ class ResultsView extends StatelessWidget {
                     border: Border.all(color: const Color(0xFF184E3B), width: 1),
                     color: const Color(0xFF0E1E18),
                   ),
-                  child: Text(
-                    'Active',
-                    style: TextStyle(
-                      color: const Color(0xFF6EE7B7),
-                      fontFamily: 'IBM Plex Sans',
-                      fontWeight: FontWeight.w400,
-                      fontSize: 10.sp,
-                      height: 1.5,
-                      letterSpacing: 0.25,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6.w,
+                        height: 6.w,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF4ADE80),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      SizedBox(width: 5.w),
+                      Text(
+                        'Active',
+                        style: TextStyle(
+                          color: const Color(0xFF6EE7B7),
+                          fontFamily: 'IBM Plex Sans',
+                          fontWeight: FontWeight.w400,
+                          fontSize: 10.sp,
+                          letterSpacing: 0.25,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
             SizedBox(height: 16.h),
+            // Hypothesis
             Text(
-              'No social media after 8PM',
+              experiment.hypothesis,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Colors.white,
                 fontFamily: 'IBM Plex Sans',
                 fontWeight: FontWeight.w400,
-                fontSize: 18.sp,
+                fontSize: 16.sp,
                 height: 1.5,
-                letterSpacing: 0,
               ),
             ),
             SizedBox(height: 8.h),
+            // Metric
             Text(
-              'Track sleep quality and morning clarity for seven days.',
+              experiment.metric,
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.55),
                 fontFamily: 'IBM Plex Sans',
                 fontWeight: FontWeight.w400,
                 fontSize: 13.sp,
-                height: 1.0,
-                letterSpacing: 0,
+                height: 1.5,
               ),
             ),
             SizedBox(height: 16.h),
-            Obx(() {
-              final progressValue = Get.find<ResultsController>().progress.value / 7;
-              return Column(
-                children: [
-                  Container(
-                    width: double.infinity,
-                    height: 8.h,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF242D29),
-                      borderRadius: BorderRadius.circular(9999.r),
-                    ),
-                    child: FractionallySizedBox(
-                      alignment: Alignment.centerLeft,
-                      widthFactor: progressValue,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF34D399),
-                          borderRadius: BorderRadius.circular(9999.r),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 8.h),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Day 1',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.4),
-                          fontFamily: 'IBM Plex Sans',
-                          fontWeight: FontWeight.w400,
-                          fontSize: 11.sp,
-                          height: 1.5,
-                          letterSpacing: 0,
-                        ),
-                      ),
-                      Text(
-                        '1 / 7 days',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.4),
-                          fontFamily: 'IBM Plex Sans',
-                          fontWeight: FontWeight.w400,
-                          fontSize: 11.sp,
-                          height: 1.5,
-                          letterSpacing: 0,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              );
-            }),
-            const Spacer(),
-            Center(
-              child: GestureDetector(
-                onTap: () => Get.toNamed(AppRoutes.experimentDetail),
+            // Progress bar
+            Container(
+              width: double.infinity,
+              height: 8.h,
+              decoration: BoxDecoration(
+                color: const Color(0xFF242D29),
+                borderRadius: BorderRadius.circular(9999.r),
+              ),
+              child: FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: progress.clamp(0.0, 1.0),
                 child: Container(
-                  width: 320.w,
-                  height: 44.h,
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12.r),
+                    color: const Color(0xFF34D399),
+                    borderRadius: BorderRadius.circular(9999.r),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                        width: 20.sp,
-                        height: 20.sp,
-                        child: CustomPaint(
-                          painter: _OutlinedTrianglePainter(),
-                        ),
-                      ),
-                      SizedBox(width: 8.w),
-                      Text(
-                        'View Analysis',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontFamily: 'IBM Plex Sans',
-                          fontWeight: FontWeight.w400,
-                          fontSize: 13.sp,
-                          height: 1.5,
-                          letterSpacing: 0,
-                        ),
-                      ),
-                    ],
+                ),
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  experiment.startDate != null
+                      ? 'Started ${experiment.startDate}'
+                      : 'Day 1',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.4),
+                    fontFamily: 'IBM Plex Sans',
+                    fontWeight: FontWeight.w400,
+                    fontSize: 11.sp,
+                  ),
+                ),
+                Text(
+                  '$elapsed / ${experiment.durationDays} days',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.4),
+                    fontFamily: 'IBM Plex Sans',
+                    fontWeight: FontWeight.w400,
+                    fontSize: 11.sp,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16.h),
+            // View Analysis button
+            GestureDetector(
+              onTap: () => Get.toNamed(AppRoutes.experimentDetail, arguments: experiment.id),
+              child: Container(
+                width: double.infinity,
+                height: 44.h,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Center(
+                  child: Text(
+                    'View Analysis',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontFamily: 'IBM Plex Sans',
+                      fontWeight: FontWeight.w400,
+                      fontSize: 13.sp,
+                    ),
                   ),
                 ),
               ),
@@ -266,10 +271,20 @@ class ResultsView extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildQueuedCard() {
+// =============================================================================
+// QUEUED EXPERIMENT CARD
+// =============================================================================
+
+class _QueuedCard extends StatelessWidget {
+  final Experiment experiment;
+  const _QueuedCard({required this.experiment});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      width: 357.w,
+      width: double.infinity,
       decoration: BoxDecoration(
         color: const Color(0xFF18181B),
         borderRadius: BorderRadius.circular(22.r),
@@ -294,24 +309,26 @@ class ResultsView extends StatelessWidget {
                       'assets/icons/nav3.png',
                       width: 16.w,
                       height: 16.w,
-                      color: Colors.white,
+                      color: Colors.white.withValues(alpha: 0.5),
                     ),
                   ),
                 ),
                 SizedBox(width: 12.w),
                 Expanded(
                   child: Text(
-                    'If I wake at the same time each day...',
+                    experiment.hypothesis,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Colors.white,
                       fontFamily: 'IBM Plex Sans',
                       fontWeight: FontWeight.w400,
-                      fontSize: 18.sp,
-                      height: 1.069,
-                      letterSpacing: 0,
+                      fontSize: 14.sp,
+                      height: 1.4,
                     ),
                   ),
                 ),
+                SizedBox(width: 8.w),
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                   decoration: BoxDecoration(
@@ -326,7 +343,6 @@ class ResultsView extends StatelessWidget {
                       fontFamily: 'IBM Plex Sans',
                       fontWeight: FontWeight.w400,
                       fontSize: 10.sp,
-                      height: 1.5,
                       letterSpacing: 0.25,
                     ),
                   ),
@@ -337,13 +353,12 @@ class ResultsView extends StatelessWidget {
             Padding(
               padding: EdgeInsets.only(left: 44.w),
               child: Text(
-                'QUEUED · SLEEP QUALITY',
+                'QUEUED · ${experiment.metric.toUpperCase()}',
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.4),
                   fontFamily: 'IBM Plex Sans',
                   fontWeight: FontWeight.w700,
                   fontSize: 9.sp,
-                  height: 1.5,
                   letterSpacing: 0.45,
                 ),
               ),
@@ -359,24 +374,22 @@ class ResultsView extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Duration',
+                  'DURATION',
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.45),
                     fontFamily: 'IBM Plex Sans',
                     fontWeight: FontWeight.w700,
                     fontSize: 9.sp,
-                    height: 1.5,
                     letterSpacing: 0.45,
                   ),
                 ),
                 Text(
-                  '7 days',
+                  '${experiment.durationDays} days',
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.45),
                     fontFamily: 'IBM Plex Sans',
                     fontWeight: FontWeight.w700,
                     fontSize: 9.sp,
-                    height: 1.5,
                     letterSpacing: 0.45,
                   ),
                 ),
@@ -396,10 +409,54 @@ class ResultsView extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildPrimeCard() {
+// =============================================================================
+// EMPTY STATE
+// =============================================================================
+
+class _EmptyState extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      width: 357.w,
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: 60.h),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F0F0F),
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06), width: 1),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.science_outlined,
+              color: Colors.white.withValues(alpha: 0.2), size: 36.sp),
+          SizedBox(height: 12.h),
+          Text(
+            'No experiments yet.\nCreate one from the Lab.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.35),
+              fontFamily: 'IBM Plex Sans',
+              fontWeight: FontWeight.w400,
+              fontSize: 13.sp,
+              height: 1.6,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// PRIME UPSELL CARD
+// =============================================================================
+
+class _PrimeCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         color: const Color(0xFF101010),
         borderRadius: BorderRadius.circular(22.r),
@@ -421,7 +478,6 @@ class ResultsView extends StatelessWidget {
                       fontWeight: FontWeight.w400,
                       fontSize: 13.sp,
                       height: 1.5,
-                      letterSpacing: 0,
                     ),
                   ),
                   SizedBox(height: 4.h),
@@ -433,7 +489,6 @@ class ResultsView extends StatelessWidget {
                       fontWeight: FontWeight.w400,
                       fontSize: 12.sp,
                       height: 1.5,
-                      letterSpacing: 0,
                     ),
                   ),
                 ],
@@ -449,100 +504,93 @@ class ResultsView extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildHeader(BuildContext context) {
+// =============================================================================
+// HEADER
+// =============================================================================
+
+class _ResultsHeader extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
       child: Row(
         children: [
-          _buildLogoSection(),
+          Image.asset('assets/icons/top_logo.png', width: 32.w, height: 32.w),
+          SizedBox(width: 10.w),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'DoWhatWorks',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'IBM Plex Sans',
+                  fontWeight: FontWeight.w400,
+                  fontSize: 14.sp,
+                  height: 1.5,
+                ),
+              ),
+              Text(
+                'RESULTS',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.35),
+                  fontFamily: 'IBM Plex Sans',
+                  fontWeight: FontWeight.w400,
+                  fontSize: 10.sp,
+                  height: 1.5,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ],
+          ),
           const Spacer(),
-          _buildNotificationSection(),
+          GestureDetector(
+            onTap: () {},
+            child: Icon(
+              Icons.notifications_outlined,
+              color: Colors.white.withValues(alpha: 0.5),
+              size: 24.w,
+            ),
+          ),
+          SizedBox(width: 12.w),
+          GestureDetector(
+            onTap: () => Get.toNamed(AppRoutes.profile),
+            child: Container(
+              width: 32.w,
+              height: 32.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFF843D23), width: 1.5),
+                color: const Color(0xFF3A1E14),
+              ),
+              child: Center(
+                child: Obx(() => Text(
+                      UserService.to.initial,
+                      style: TextStyle(
+                        color: const Color(0xFFFF8A5B),
+                        fontFamily: 'IBM Plex Sans',
+                        fontWeight: FontWeight.w400,
+                        fontSize: 14.sp,
+                      ),
+                    )),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildLogoSection() {
-    return Row(
-      children: [
-        Image.asset(
-          'assets/icons/top_logo.png',
-          width: 32.w,
-          height: 32.w,
-        ),
-        SizedBox(width: 10.w),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'DoWhatWorks',
-              style: TextStyle(
-                color: Colors.white,
-                fontFamily: 'IBM Plex Sans',
-                fontWeight: FontWeight.w400,
-                fontSize: 14.sp,
-                height: 1.5,
-                letterSpacing: 0,
-              ),
-            ),
-            Text(
-              'Homepage',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.35),
-                fontFamily: 'IBM Plex Sans',
-                fontWeight: FontWeight.w400,
-                fontSize: 10.sp,
-                height: 1.5,
-                letterSpacing: 1.5,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+// =============================================================================
+// DIVIDER
+// =============================================================================
 
-  Widget _buildNotificationSection() {
-    return Row(
-      children: [
-        GestureDetector(
-          onTap: () {},
-          child: Icon(
-            Icons.notifications_outlined,
-            color: Colors.white.withValues(alpha: 0.5),
-            size: 24.w,
-          ),
-        ),
-        SizedBox(width: 12.w),
-        GestureDetector(
-          onTap: () => Get.toNamed(AppRoutes.profile),
-          child: Container(
-            width: 32.w,
-            height: 32.h,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFF843D23), width: 1.5),
-              color: const Color(0xFF3A1E14),
-            ),
-            child: Center(
-              child: Text(
-                'F',
-                style: TextStyle(
-                  color: const Color(0xFFFF8A5B),
-                  fontFamily: 'IBM Plex Sans',
-                  fontWeight: FontWeight.w400,
-                  fontSize: 14.sp,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDivider() {
+class _Divider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 24.w),
       child: Divider(

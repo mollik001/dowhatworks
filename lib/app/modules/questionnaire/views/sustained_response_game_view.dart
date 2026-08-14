@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -13,113 +12,196 @@ class SustainedResponseGameView extends StatefulWidget {
 }
 
 class _SustainedResponseGameViewState extends State<SustainedResponseGameView> {
-  static const int totalRounds = 7;
-  static const int maxAttempts = 2;
-  int level = 1;
-  int attempt = 1;
-  int currentRound = 1;
+  static const int totalTrials = 30;
+  // ~22% X = 7 out of 30
+  static const int xTrialCount = 7;
+  static const int visibleMs = 700;
+  static const int blankMs = 300;
 
-  String currentLetter = '';
-  bool waitingForTap = false;
-  bool roundActive = false;
-  Timer? roundTimer;
+  // Scores passed in from Stroop
+  late final int _capacityScore;
+  late final int _controlScore;
+  late final int _stroopAvgMs;
 
-  final Random random = Random();
-  final List<String> alphabet = List.generate(26, (i) => String.fromCharCode(65 + i));
+  // Pre-generated trial sequence: true = X (no-go), false = non-X (go)
+  late final List<bool> _trialSequence;
+
+  int _trialIndex = 0;
+  bool _trialActive = false;    // letter is currently visible
+  bool _tappedThisTrial = false; // prevents double-tap
+  bool _gameFinished = false;
+
+  // 4 outcome counters
+  int _correctHits = 0;        // non-X, tapped
+  int _correctRejections = 0;  // X, not tapped
+  int _omissionErrors = 0;     // non-X, not tapped
+  int _commissionErrors = 0;   // X, tapped
+
+  String _currentLetter = '';
+  Timer? _visibleTimer;
+  Timer? _blankTimer;
 
   @override
   void initState() {
     super.initState();
-    _nextRound();
+    final args = Get.arguments;
+    _capacityScore = (args is Map && args['capacity_score'] is int) ? args['capacity_score'] as int : 3;
+    _controlScore  = (args is Map && args['control_score']  is int) ? args['control_score']  as int : 0;
+    _stroopAvgMs   = (args is Map && args['stroop_avg_ms']  is int) ? args['stroop_avg_ms']  as int : 0;
+
+    print('[CPT] Started — received capacity_score=$_capacityScore  control_score=$_controlScore');
+    _trialSequence = _buildTrialSequence();
+    _runNextTrial();
   }
 
   @override
   void dispose() {
-    roundTimer?.cancel();
+    _visibleTimer?.cancel();
+    _blankTimer?.cancel();
     super.dispose();
   }
 
-  void _nextRound() {
-    if (currentRound > totalRounds) {
-      Get.offAllNamed(AppRoutes.testComplete);
+  /// Build exactly 30 trials: 7 X (no-go) + 23 non-X (go), shuffled.
+  List<bool> _buildTrialSequence() {
+    final list = <bool>[];
+    for (int i = 0; i < xTrialCount; i++) list.add(true);          // X trials
+    for (int i = 0; i < totalTrials - xTrialCount; i++) list.add(false); // non-X
+    list.shuffle();
+    return list;
+  }
+
+  /// Pick a random non-X letter (A–Z excluding X).
+  String _randomNonXLetter() {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWYZ'; // 25 chars, X excluded
+    final idx = DateTime.now().microsecondsSinceEpoch % letters.length;
+    return letters[idx];
+  }
+
+  void _runNextTrial() {
+    if (!mounted || _gameFinished) return;
+    if (_trialIndex >= totalTrials) {
+      _finishGame();
       return;
     }
 
-    waitingForTap = false;
-    roundActive = true;
-    currentLetter = alphabet[random.nextInt(26)];
+    final isXTrial = _trialSequence[_trialIndex];
+    _currentLetter = isXTrial ? 'X' : _randomNonXLetter();
+    _tappedThisTrial = false;
+    _trialActive = true;
+    setState(() {});
+
+    // After visible window, evaluate if not already tapped
+    _visibleTimer = Timer(const Duration(milliseconds: visibleMs), () {
+      if (!mounted || _gameFinished) return;
+      _evaluateTrialEnd();
+    });
+  }
+
+  /// Called when the visible window expires (user didn't tap, or we need to close).
+  void _evaluateTrialEnd() {
+    if (!mounted || _gameFinished) return;
+    _trialActive = false;
+
+    if (!_tappedThisTrial) {
+      // No tap — score it
+      final isX = _trialSequence[_trialIndex];
+      if (isX) {
+        _correctRejections++; // X, no tap = correct rejection
+      } else {
+        _omissionErrors++;    // non-X, no tap = omission error
+      }
+    }
 
     setState(() {});
 
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      if (!mounted || !roundActive) return;
-      waitingForTap = true;
-      setState(() {});
-
-      Future.delayed(const Duration(milliseconds: 1500), () {
-        if (!mounted || !roundActive) return;
-        if (waitingForTap) {
-          roundActive = false;
-          waitingForTap = false;
-          setState(() {});
-
-          Future.delayed(const Duration(milliseconds: 600), () {
-            if (!mounted) return;
-            if (currentLetter == 'X') {
-              setState(() {
-                currentRound++;
-              });
-              _nextRound();
-            } else {
-              setState(() {
-                attempt++;
-              });
-              if (attempt > maxAttempts) {
-                Get.offAllNamed(AppRoutes.testComplete);
-              } else {
-                Future.delayed(const Duration(milliseconds: 600), () {
-                  if (mounted && roundActive == false) {
-                    _nextRound();
-                  }
-                });
-              }
-            }
-          });
-        }
-      });
+    // Blank interval then next trial
+    _blankTimer = Timer(const Duration(milliseconds: blankMs), () {
+      if (!mounted || _gameFinished) return;
+      _trialIndex++;
+      _runNextTrial();
     });
   }
 
   void _onTap() {
-    if (!roundActive || !waitingForTap) return;
+    if (!_trialActive || _tappedThisTrial || _gameFinished) return;
+    _tappedThisTrial = true;
+    _visibleTimer?.cancel(); // stop the auto-evaluate timer
 
-    final wasX = currentLetter == 'X';
-    roundActive = false;
-    waitingForTap = false;
+    final isX = _trialSequence[_trialIndex];
+    if (isX) {
+      _commissionErrors++; // X, tapped = commission error
+    } else {
+      _correctHits++;      // non-X, tapped = correct hit
+    }
+
+    _trialActive = false;
     setState(() {});
 
-    if (wasX) {
-      setState(() {
-        attempt++;
-      });
-      if (attempt > maxAttempts) {
-        Get.offAllNamed(AppRoutes.testComplete);
-      } else {
-        Future.delayed(const Duration(milliseconds: 600), () {
-          if (mounted) _nextRound();
-        });
-      }
-    } else {
-      setState(() {
-        currentRound++;
-      });
-      _nextRound();
-    }
+    // Blank interval then next trial
+    _blankTimer = Timer(const Duration(milliseconds: blankMs), () {
+      if (!mounted || _gameFinished) return;
+      _trialIndex++;
+      _runNextTrial();
+    });
+  }
+
+  void _finishGame() {
+    if (_gameFinished) return;
+    _gameFinished = true;
+
+    final successfulTrials = _correctHits + _correctRejections;
+    final enduranceScore = (successfulTrials / totalTrials * 100).round();
+
+    debugPrint('[CPT] correct_hits=$_correctHits  correct_rejections=$_correctRejections'
+        '  omissions=$_omissionErrors  commissions=$_commissionErrors'
+        '  endurance_score=$enduranceScore');
+
+    Get.offAllNamed(
+      AppRoutes.testComplete,
+      arguments: {
+        'capacity_score': _capacityScore,
+        'control_score': _controlScore,
+        'stroop_avg_ms': _stroopAvgMs,
+        'endurance_score': enduranceScore,
+        'cpt_correct_hits': _correctHits,
+        'cpt_correct_rejections': _correctRejections,
+        'cpt_omission_errors': _omissionErrors,
+        'cpt_commission_errors': _commissionErrors,
+      },
+    );
+  }
+
+  void _skipTest() {
+    _visibleTimer?.cancel();
+    _blankTimer?.cancel();
+    _gameFinished = true;
+
+    // Score whatever has been evaluated so far
+    final successfulTrials = _correctHits + _correctRejections;
+    final enduranceScore = _trialIndex > 0
+        ? (successfulTrials / totalTrials * 100).round()
+        : 0;
+
+    debugPrint('[CPT] skipped at trial $_trialIndex  endurance_score=$enduranceScore');
+
+    Get.offAllNamed(
+      AppRoutes.testComplete,
+      arguments: {
+        'capacity_score': _capacityScore,
+        'control_score': _controlScore,
+        'stroop_avg_ms': _stroopAvgMs,
+        'endurance_score': enduranceScore,
+        'cpt_correct_hits': _correctHits,
+        'cpt_correct_rejections': _correctRejections,
+        'cpt_omission_errors': _omissionErrors,
+        'cpt_commission_errors': _commissionErrors,
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final statusText = 'Tap for All Except "X" · $currentRound / $totalRounds';
+    final statusText = 'Tap for All Except "X" · ${_trialIndex + 1} / $totalTrials';
 
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0A),
@@ -151,7 +233,7 @@ class _SustainedResponseGameViewState extends State<SustainedResponseGameView> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () => Get.offAllNamed(AppRoutes.testComplete),
+                    onTap: _skipTest,
                     child: Row(
                       children: [
                         Text(
@@ -179,7 +261,7 @@ class _SustainedResponseGameViewState extends State<SustainedResponseGameView> {
               SizedBox(height: 16.h),
               Center(
                 child: Text(
-                  'Level $level · Attempt $attempt of $maxAttempts',
+                  'Trial ${_trialIndex + 1} of $totalTrials',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'IBM Plex Sans',
@@ -206,7 +288,7 @@ class _SustainedResponseGameViewState extends State<SustainedResponseGameView> {
               ),
               SizedBox(height: 32.h),
               Text(
-                currentLetter,
+                _trialActive ? _currentLetter : '',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'IBM Plex Sans',

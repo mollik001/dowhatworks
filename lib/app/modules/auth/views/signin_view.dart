@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:dowhatworks/app/routes/app_routes.dart';
-import '../controllers/signup_controller.dart';
+import '../controllers/signin_controller.dart';
 import '../widgets/custom_text_field.dart';
 import '../../onboarding/widgets/custom_button.dart';
 
-class SigninView extends GetView<SignupController> {
+class SigninView extends GetView<SigninController> {
   const SigninView({super.key});
 
   @override
@@ -88,9 +88,9 @@ class SigninView extends GetView<SignupController> {
             SizedBox(height: 8.h),
             Align(
               alignment: Alignment.centerRight,
-                      child: GestureDetector(
-                        onTap: () => Get.toNamed(AppRoutes.authForgotPassword),
-                        child: Text(
+              child: GestureDetector(
+                onTap: () => Get.toNamed(AppRoutes.authForgotPassword),
+                child: Text(
                   'Forget Password?',
                   style: TextStyle(
                     fontFamily: 'IBM Plex Sans',
@@ -105,9 +105,15 @@ class SigninView extends GetView<SignupController> {
               ),
             ),
             SizedBox(height: 24.h),
-            CustomButton(
-              text: 'Sign In',
-              onPressed: () => Get.offAllNamed(AppRoutes.questionnaire),
+            Obx(
+              () => controller.isLoading.value
+                  ? const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    )
+                  : CustomButton(
+                      text: 'Sign In',
+                      onPressed: controller.signIn,
+                    ),
             ),
             SizedBox(height: 16.h),
             CustomButton(

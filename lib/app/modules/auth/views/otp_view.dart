@@ -58,27 +58,37 @@ class OtpView extends GetView<OtpController> {
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 8.h),
-            Text(
-              'We sent a code to contact@dscode...com. Enter 6 digit code that mentioned in the email',
-              style: TextStyle(
-                fontFamily: 'IBM Plex Sans',
-                fontWeight: FontWeight.w400,
-                fontSize: 14.sp,
-                height: 1.0,
-                letterSpacing: 0,
-                color: const Color(0xFFD1D1D1),
+            Obx(
+              () => Text(
+                controller.email.value.isNotEmpty
+                    ? 'We sent a code to ${controller.email.value}. Enter 6 digit code that mentioned in the email'
+                    : 'We sent a code to your email. Enter 6 digit code that mentioned in the email',
+                style: TextStyle(
+                  fontFamily: 'IBM Plex Sans',
+                  fontWeight: FontWeight.w400,
+                  fontSize: 14.sp,
+                  height: 1.2,
+                  letterSpacing: 0,
+                  color: const Color(0xFFD1D1D1),
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
             ),
             SizedBox(height: 20.h),
-              OtpInput(
-                controllers: controller.otpControllers,
-                focusNodes: controller.otpFocusNodes,
-              ),
+            OtpInput(
+              controllers: controller.otpControllers,
+              focusNodes: controller.otpFocusNodes,
+            ),
             SizedBox(height: 24.h),
-            CustomButton(
-              text: 'Verify Code',
-              onPressed: controller.verifyOtp,
+            Obx(
+              () => controller.isLoading.value
+                  ? const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    )
+                  : CustomButton(
+                      text: 'Verify Code',
+                      onPressed: controller.verifyOtp,
+                    ),
             ),
             SizedBox(height: 16.h),
             GestureDetector(

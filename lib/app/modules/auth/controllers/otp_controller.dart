@@ -1,63 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:dowhatworks/app/routes/app_routes.dart';
+import '../../../data/repositories/auth_repository.dart';
+import '../../../data/services/storage_service.dart';
+import '../../../routes/app_routes.dart';
 
 class OtpController extends GetxController {
+  final AuthRepository _authRepository = AuthRepository();
+
   final otpControllers = List.generate(6, (_) => TextEditingController());
   final otpFocusNodes = List.generate(6, (_) => FocusNode());
 
-  void verifyOtp() {
-    final otp = otpControllers.map((c) => c.text).join();
-    if (otp.length == 6) {
-      Get.defaultDialog(
-        title: '',
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.check_circle, color: Colors.green, size: 60.sp),
-            SizedBox(height: 16.h),
-            Text(
-              'Verification Successful',
-              style: TextStyle(
-                fontFamily: 'IBM Plex Sans',
-                fontWeight: FontWeight.w700,
-                fontSize: 18.sp,
-                color: Colors.white,
-              ),
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              'Your account has been verified',
-              style: TextStyle(
-                fontFamily: 'IBM Plex Sans',
-                fontWeight: FontWeight.w400,
-                fontSize: 14.sp,
-                color: const Color(0xFFD1D1D1),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-        confirm: TextButton(
-          onPressed: () {
-            Get.back();
-            Get.offAllNamed(AppRoutes.questionnaire);
-          },
-          child: Text(
-            'Continue',
-            style: TextStyle(
-              fontFamily: 'IBM Plex Sans',
-              fontWeight: FontWeight.w700,
-              fontSize: 14.sp,
-              color: Colors.white,
-            ),
-          ),
-        ),
-        backgroundColor: const Color(0xFF1A1A1A),
-        radius: 16.r,
-      );
-    } else {
+  final isLoading = false.obs;
+  final email = ''.obs;
+  final isForgotPassword = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    if (Get.arguments != null && Get.arguments is Map) {
+      final map = Get.arguments as Map;
+      email.value = map['email'] ?? '';
+      isForgotPassword.value = (map['isForgotPassword'] == true) || (map['nextRoute'] == AppRoutes.authResetPassword);
+    }
+  }
+
+  Future<void> verifyOtp() async {
+    final otpString = otpControllers.map((c) => c.text).join();
+    if (otpString.length != 6) {
       Get.snackbar(
         'Error',
         'Please enter the complete 6-digit code',
@@ -65,6 +34,57 @@ class OtpController extends GetxController {
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
+      return;
+    }
+
+    try {
+      isLoading.value = true;
+      final dynamic otpCode = int.tryParse(otpString) ?? otpString;
+
+      final response = await _authRepository.verifyOtp(
+        email: email.value.isNotEmpty ? email.value : 'hasanfaysal33@gmail.com',
+        otpCode: otpCode,
+      );
+
+      final String? token = response['token'] ??
+          response['reset_token'] ??
+          response['access_token'] ??
+          response['access'] ??
+          response['data']?['token'] ??
+          response['data']?['access_token'];
+
+      if (isForgotPassword.value) {
+        Get.toNamed(
+          AppRoutes.authResetPassword,
+          arguments: {
+            'email': email.value,
+            'token': token,
+          },
+        );
+      } else {
+        final userMap = response['user'] as Map<String, dynamic>? ??
+            (response['data'] is Map ? (response['data']['user'] as Map<String, dynamic>?) : null);
+
+        final bool hasCompletedOnboarding = (userMap?['has_completed_onboarding'] == true) ||
+            (response['has_completed_onboarding'] == true) ||
+            StorageService.getHasCompletedOnboarding();
+
+        if (hasCompletedOnboarding) {
+          Get.offAllNamed(AppRoutes.home);
+        } else {
+          Get.offAllNamed(AppRoutes.questionnaire);
+        }
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Verification Failed',
+        e.toString(),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoading.value = false;
     }
   }
 

@@ -1,4 +1,5 @@
 import 'package:dowhatworks/app/modules/profile/controllers/profile_controller.dart';
+import 'package:dowhatworks/app/data/services/user_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -79,15 +80,15 @@ class ProfileView extends GetView<ProfileController> {
                       color: const Color(0xFF3A1E14),
                     ),
                     child: Center(
-                      child: Text(
-                        'F',
+                      child: Obx(() => Text(
+                        UserService.to.initial,
                         style: TextStyle(
                           color: const Color(0xFFFF8A5B),
                           fontFamily: 'IBM Plex Sans',
                           fontWeight: FontWeight.w400,
                           fontSize: 20.sp,
                         ),
-                      ),
+                      )),
                     ),
                   ),
                   SizedBox(width: 16.w),
@@ -95,8 +96,8 @@ class ProfileView extends GetView<ProfileController> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'faridnsiam9090',
+                        Obx(() => Text(
+                          UserService.to.username.value,
                           style: TextStyle(
                             color: Colors.white,
                             fontFamily: 'IBM Plex Sans',
@@ -105,10 +106,10 @@ class ProfileView extends GetView<ProfileController> {
                             height: 1.5,
                             letterSpacing: 0,
                           ),
-                        ),
+                        )),
                         SizedBox(height: 4.h),
-                        Text(
-                          'faridnsiam9090@gmail.com',
+                        Obx(() => Text(
+                          UserService.to.email.value,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.45),
                             fontFamily: 'IBM Plex Sans',
@@ -117,7 +118,7 @@ class ProfileView extends GetView<ProfileController> {
                             height: 1.5,
                             letterSpacing: 0,
                           ),
-                        ),
+                        )),
                         SizedBox(height: 12.h),
                         Container(
                           padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
@@ -352,15 +353,15 @@ class ProfileView extends GetView<ProfileController> {
             color: const Color(0xFF3A1E14),
           ),
           child: Center(
-            child: Text(
-              'F',
+            child: Obx(() => Text(
+              UserService.to.initial,
               style: TextStyle(
                 color: const Color(0xFFFF8A5B),
                 fontFamily: 'IBM Plex Sans',
                 fontWeight: FontWeight.w400,
                 fontSize: 14.sp,
               ),
-            ),
+            )),
           ),
         ),
       ],

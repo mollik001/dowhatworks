@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -13,9 +12,7 @@ class StroopGameView extends StatefulWidget {
 }
 
 class _StroopGameViewState extends State<StroopGameView> {
-  static const int maxAttempts = 2;
-  int level = 1;
-  int attempt = 1;
+  static const int totalTrials = 15;
 
   static const List<Color> gameColors = [
     Colors.red,
@@ -23,57 +20,118 @@ class _StroopGameViewState extends State<StroopGameView> {
     Colors.green,
     Colors.yellow,
   ];
-
   static const List<String> colorNames = ['RED', 'BLUE', 'GREEN', 'YELLOW'];
 
-  late String currentWord;
-  late Color inkColor;
-  late int correctIndex;
-  Timer? timer;
-  final Random random = Random();
+  // --- Pre-generated balanced trial list ---
+  // Each trial: { wordIndex, inkIndex }
+  late final List<Map<String, int>> _trials;
+
+  int _trialIndex = 0;
+  bool _answered = false;
+
+  // Scoring
+  int _correctCount = 0;
+  int _totalCorrectResponseMs = 0;
+  DateTime? _trialStartTime;
+
+  // capacity_score passed in from Digit Span
+  late final int _capacityScore;
 
   @override
   void initState() {
     super.initState();
-    _nextRound();
+    final args = Get.arguments;
+    _capacityScore = (args is Map && args['capacity_score'] is int)
+        ? args['capacity_score'] as int
+        : 3;
+
+    print('[Stroop] Started — received capacity_score=$_capacityScore');
+    _trials = _buildBalancedTrials();
+    _trialStartTime = DateTime.now();
   }
 
-  @override
-  void dispose() {
-    timer?.cancel();
-    super.dispose();
+  /// Build 15 trials: ~7-8 congruent, ~7-8 incongruent, then shuffle.
+  List<Map<String, int>> _buildBalancedTrials() {
+    final list = <Map<String, int>>[];
+    // 8 congruent (word index == ink index)
+    for (int i = 0; i < 8; i++) {
+      final idx = i % colorNames.length;
+      list.add({'word': idx, 'ink': idx});
+    }
+    // 7 incongruent (word index != ink index)
+    for (int i = 0; i < 7; i++) {
+      final wordIdx = i % colorNames.length;
+      final inkIdx = (wordIdx + 1 + (i ~/ colorNames.length)) % colorNames.length;
+      list.add({'word': wordIdx, 'ink': inkIdx});
+    }
+    list.shuffle();
+    return list;
   }
 
-  void _nextRound() {
-    final wordIndex = random.nextInt(colorNames.length);
-    final inkIndex = random.nextInt(gameColors.length);
-    currentWord = colorNames[wordIndex];
-    inkColor = gameColors[inkIndex];
-    correctIndex = inkIndex;
-    setState(() {});
-  }
+  void _onOptionTapped(int tappedIndex) {
+    if (_answered) return; // block multiple taps per trial
+    _answered = true;
 
-  void _onOptionTapped(int index) {
-    if (index == correctIndex) {
-      setState(() {
-        level++;
-        attempt = 1;
-      });
-      _nextRound();
+    final trial = _trials[_trialIndex];
+    final correctIndex = trial['ink']!;
+    final isCorrect = tappedIndex == correctIndex;
+
+    // Local counters updated before navigating (avoids async state issues)
+    final updatedCorrect = _correctCount + (isCorrect ? 1 : 0);
+    int updatedResponseMs = _totalCorrectResponseMs;
+    if (isCorrect && _trialStartTime != null) {
+      updatedResponseMs += DateTime.now().difference(_trialStartTime!).inMilliseconds;
+    }
+
+    final nextTrial = _trialIndex + 1;
+
+    if (nextTrial >= totalTrials) {
+      // Final trial — compute score from local values
+      final controlScore = (updatedCorrect / totalTrials * 100).round();
+      final avgResponseMs = updatedCorrect > 0
+          ? (updatedResponseMs / updatedCorrect).round()
+          : 0;
+
+      debugPrint('[Stroop] correct=$updatedCorrect/15  control_score=$controlScore  avg_response_ms=$avgResponseMs');
+
+      Get.offAllNamed(
+        AppRoutes.sustainedResponseIntro,
+        arguments: {
+          'capacity_score': _capacityScore,
+          'control_score': controlScore,
+          'stroop_avg_ms': avgResponseMs,
+        },
+      );
     } else {
       setState(() {
-        attempt++;
+        _correctCount = updatedCorrect;
+        _totalCorrectResponseMs = updatedResponseMs;
+        _trialIndex = nextTrial;
+        _answered = false;
+        _trialStartTime = DateTime.now();
       });
-      if (attempt > maxAttempts) {
-        Get.offAllNamed(AppRoutes.sustainedResponseIntro);
-      } else {
-        _nextRound();
-      }
     }
+  }
+
+  void _skipTest() {
+    // Skip with 0 correct for this game but preserve capacity_score
+    debugPrint('[Stroop] skipped — control_score=0');
+    Get.offAllNamed(
+      AppRoutes.sustainedResponseIntro,
+      arguments: {
+        'capacity_score': _capacityScore,
+        'control_score': 0,
+        'stroop_avg_ms': 0,
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final trial = _trials[_trialIndex];
+    final currentWord = colorNames[trial['word']!];
+    final inkColor = gameColors[trial['ink']!];
+
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0A),
       body: Center(
@@ -104,7 +162,7 @@ class _StroopGameViewState extends State<StroopGameView> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () => Get.offAllNamed(AppRoutes.sustainedResponseIntro),
+                    onTap: _skipTest,
                     child: Row(
                       children: [
                         Text(
@@ -132,7 +190,7 @@ class _StroopGameViewState extends State<StroopGameView> {
               SizedBox(height: 16.h),
               Center(
                 child: Text(
-                  'Level $level · Attempt $attempt of $maxAttempts',
+                  'Trial ${_trialIndex + 1} of $totalTrials',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'IBM Plex Sans',

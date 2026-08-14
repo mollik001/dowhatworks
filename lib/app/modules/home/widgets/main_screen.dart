@@ -1,3 +1,4 @@
+import 'package:dowhatworks/app/modules/home/controllers/home_controller.dart';
 import 'package:dowhatworks/app/modules/home/widgets/custom_navbar.dart';
 import 'package:dowhatworks/app/modules/home/views/home_view.dart';
 import 'package:dowhatworks/app/modules/daniel/controllers/daniel_controller.dart';
@@ -26,6 +27,9 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
+    if (!Get.isRegistered<HomeController>()) {
+      Get.put<HomeController>(HomeController());
+    }
     if (!Get.isRegistered<DanielController>()) {
       Get.put<DanielController>(DanielController());
     }

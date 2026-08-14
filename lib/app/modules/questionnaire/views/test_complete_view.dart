@@ -1,11 +1,98 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../../../data/repositories/auth_repository.dart';
+import '../../../data/services/storage_service.dart';
 import '../../onboarding/widgets/custom_button.dart';
 import '../../../routes/app_routes.dart';
 
-class TestCompleteView extends StatelessWidget {
+class TestCompleteView extends StatefulWidget {
   const TestCompleteView({super.key});
+
+  @override
+  State<TestCompleteView> createState() => _TestCompleteViewState();
+}
+
+class _TestCompleteViewState extends State<TestCompleteView> {
+  final AuthRepository _authRepository = AuthRepository();
+  bool _isSaving = false;
+
+  // Scores received from CPT via Get.arguments
+  late final int _capacityScore;
+  late final int _controlScore;
+  late final int _enduranceScore;
+  late final int _attentionScore;
+
+  @override
+  void initState() {
+    super.initState();
+    final args = Get.arguments;
+
+    _capacityScore  = (args is Map && args['capacity_score']  is int) ? args['capacity_score']  as int : 3;
+    _controlScore   = (args is Map && args['control_score']   is int) ? args['control_score']   as int : 0;
+    _enduranceScore = (args is Map && args['endurance_score'] is int) ? args['endurance_score'] as int : 0;
+
+    // Composite: capacity_percent = min(100, round(capacity_score / 9 * 100))
+    // attention_score = round((capacity_percent + control_score + endurance_score) / 3)
+    final capacityPercent = ((_capacityScore / 9) * 100).round().clamp(0, 100);
+    _attentionScore = ((capacityPercent + _controlScore + _enduranceScore) / 3).round();
+
+    debugPrint('[TestComplete] capacity=$_capacityScore  control=$_controlScore'
+        '  endurance=$_enduranceScore  capacity_percent=$capacityPercent'
+        '  attention_score=$_attentionScore');
+  }
+
+  Future<void> _saveAndSync() async {
+    if (_isSaving) return;
+
+    final token = StorageService.getAccessToken();
+    if (token == null || token.isEmpty) {
+      Get.snackbar(
+        'Session Expired',
+        'Please sign in again to continue.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      Get.offAllNamed(AppRoutes.authSignin);
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      final response = await _authRepository.submitAttentionScores(
+        attentionScore: _attentionScore,
+        capacityScore: _capacityScore,
+        controlScore: _controlScore,
+        enduranceScore: _enduranceScore,
+        accessToken: token,
+      );
+
+      debugPrint('[TestComplete] API response: $response');
+
+      await StorageService.setHasCompletedOnboarding(true);
+      Get.offAllNamed(AppRoutes.home);
+    } catch (e) {
+      debugPrint('[TestComplete] Error: $e');
+      setState(() => _isSaving = false);
+      Get.snackbar(
+        'Sync Failed',
+        _friendlyError(e.toString()),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 4),
+      );
+    }
+  }
+
+  String _friendlyError(String raw) {
+    if (raw.contains('No internet')) return 'No internet connection. Please check your network and try again.';
+    if (raw.contains('401') || raw.contains('Unauthorized')) return 'Your session has expired. Please sign in again.';
+    if (raw.contains('500') || raw.contains('502') || raw.contains('503')) return 'The server is having trouble. Please try again in a moment.';
+    return 'Something went wrong. Please try again.';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +187,7 @@ class TestCompleteView extends StatelessWidget {
                   Expanded(
                     child: _buildStatBox(
                       top: 'Memory\ncapacity',
-                      middle: '5',
+                      middle: '$_capacityScore',
                       bottom: 'digits',
                     ),
                   ),
@@ -108,7 +195,7 @@ class TestCompleteView extends StatelessWidget {
                   Expanded(
                     child: _buildStatBox(
                       top: 'Cognitive\ncontrol',
-                      middle: '60%',
+                      middle: '$_controlScore%',
                       bottom: 'response',
                     ),
                   ),
@@ -116,7 +203,7 @@ class TestCompleteView extends StatelessWidget {
                   Expanded(
                     child: _buildStatBox(
                       top: 'Focus\nendurance',
-                      middle: '57%',
+                      middle: '$_enduranceScore%',
                       bottom: 'accuracy',
                     ),
                   ),
@@ -125,10 +212,10 @@ class TestCompleteView extends StatelessWidget {
               SizedBox(height: 32.h),
               ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: 400.w),
-              child: CustomButton(
-                text: 'Save & Sync Profile',
-                onPressed: () => Get.offAllNamed(AppRoutes.home),
-              ),
+                child: CustomButton(
+                  text: _isSaving ? 'Saving...' : 'Save & Sync Profile',
+                  onPressed: _isSaving ? () {} : _saveAndSync,
+                ),
               ),
               SizedBox(height: 16.h),
               Text(

@@ -85,9 +85,15 @@ class ResetPasswordView extends GetView<ResetPasswordController> {
               isPassword: true,
             ),
             SizedBox(height: 24.h),
-            CustomButton(
-              text: 'Update Password',
-              onPressed: controller.updatePassword,
+            Obx(
+              () => controller.isLoading.value
+                  ? const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    )
+                  : CustomButton(
+                      text: 'Update Password',
+                      onPressed: controller.updatePassword,
+                    ),
             ),
             SizedBox(height: 70.h),
           ],

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:dowhatworks/app/routes/app_routes.dart';
 import '../controllers/signup_controller.dart';
 import '../widgets/custom_text_field.dart';
 import '../../onboarding/widgets/custom_button.dart';
@@ -73,9 +72,9 @@ class SignupView extends GetView<SignupController> {
             ),
             SizedBox(height: 20.h),
             CustomTextField(
-              hintText: 'Enter Full Name',
+              hintText: 'Enter Username',
               iconPath: 'assets/icons/mini_profile.png',
-              controller: controller.fullNameController,
+              controller: controller.usernameController,
             ),
             SizedBox(height: 16.h),
             CustomTextField(
@@ -106,9 +105,15 @@ class SignupView extends GetView<SignupController> {
               isPassword: true,
             ),
             SizedBox(height: 24.h),
-            CustomButton(
-              text: 'Sign Up',
-              onPressed: () => Get.toNamed(AppRoutes.authOtp),
+            Obx(
+              () => controller.isLoading.value
+                  ? const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    )
+                  : CustomButton(
+                      text: 'Sign Up',
+                      onPressed: controller.signUp,
+                    ),
             ),
             SizedBox(height: 16.h),
             CustomButton(

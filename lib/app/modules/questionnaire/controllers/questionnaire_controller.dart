@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:dowhatworks/app/routes/app_routes.dart';
+import 'package:dowhatworks/app/data/repositories/auth_repository.dart';
+import 'package:dowhatworks/app/data/services/storage_service.dart';
 import '../models/question_model.dart';
 
 class QuestionnaireController extends GetxController {
+  final AuthRepository _authRepository = AuthRepository();
+
   final currentPage = 0.obs;
+  final isLoading = false.obs;
   final PageController pageController = PageController();
   final selectedOptions = <String, String>{}.obs;
 
@@ -335,7 +340,8 @@ class QuestionnaireController extends GetxController {
         curve: Curves.easeInOut,
       );
     } else {
-      skip();
+      print('[Onboarding] Last page reached — calling _submitOnboarding()');
+      _submitOnboarding();
     }
   }
 
@@ -343,8 +349,93 @@ class QuestionnaireController extends GetxController {
     selectedOptions.assignAll({...selectedOptions, questionId: option});
   }
 
+  /// Builds the answers map: question_id → option index (0-based integer)
+  Map<String, int> _buildAnswers() {
+    final answers = <String, int>{};
+    for (final entry in selectedOptions.entries) {
+      final question = getQuestion(entry.key);
+      if (question?.options != null) {
+        final index = question!.options!.indexOf(entry.value);
+        if (index != -1) {
+          answers[entry.key] = index;
+        }
+      }
+    }
+    return answers;
+  }
+
+  Future<void> _submitOnboarding() async {
+    final token = StorageService.getAccessToken();
+
+    print('==============================');
+    print('[Onboarding] Submit triggered');
+    print('[Onboarding] Token present: ${token != null && token.isNotEmpty}');
+
+    if (token == null || token.isEmpty) {
+      print('[Onboarding] No token — redirecting to sign in');
+      Get.snackbar(
+        'Session Expired',
+        'Please sign in again to continue.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      Get.offAllNamed(AppRoutes.authSignin);
+      return;
+    }
+
+    try {
+      isLoading.value = true;
+      final answers = _buildAnswers();
+      print('[Onboarding] Answers to submit: $answers');
+      print('[Onboarding] Calling API...');
+
+      final response = await _authRepository.submitOnboarding(
+        answers: answers,
+        accessToken: token,
+      );
+
+      print('[Onboarding] SUCCESS — API response: $response');
+
+      // Mark onboarding as complete locally
+      await StorageService.setHasCompletedOnboarding(true);
+
+      Get.offAllNamed(AppRoutes.game);
+    } catch (e) {
+      print('[Onboarding] ERROR: $e');
+      Get.snackbar(
+        'Submission Failed',
+        _friendlyError(e.toString()),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 4),
+      );
+    } finally {
+      isLoading.value = false;
+      print('==============================');
+    }
+  }
+
+  /// Skip questionnaire entirely — still navigates to game screen without API call
   void skip() {
     Get.offAllNamed(AppRoutes.game);
+  }
+
+  String _friendlyError(String raw) {
+    if (raw.contains('No internet')) {
+      return 'No internet connection. Please check your network and try again.';
+    }
+    if (raw.contains('401') || raw.contains('Unauthorized')) {
+      return 'Your session has expired. Please sign in again.';
+    }
+    if (raw.contains('400')) {
+      return 'Some answers couldn\'t be saved. Please try again.';
+    }
+    if (raw.contains('500') || raw.contains('502') || raw.contains('503')) {
+      return 'The server is having trouble. Please try again in a moment.';
+    }
+    return 'Something went wrong. Please try again.';
   }
 
   @override

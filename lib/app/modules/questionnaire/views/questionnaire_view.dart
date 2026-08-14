@@ -91,10 +91,14 @@ class QuestionnaireView extends GetView<QuestionnaireController> {
                   ),
                 )),
                 SizedBox(height: 16.h),
-                CustomButton(
-                  text: 'Next',
-                  onPressed: () => controller.nextPage(),
-                ),
+                Obx(() => CustomButton(
+                  text: controller.isLoading.value
+                      ? 'Submitting...'
+                      : (pageIndex == controller.pages.length - 1 ? 'Submit' : 'Next'),
+                  onPressed: controller.isLoading.value
+                      ? () {}
+                      : () => controller.nextPage(),
+                )),
                 SizedBox(height: 16.h),
                 Center(
                   child: GestureDetector(
