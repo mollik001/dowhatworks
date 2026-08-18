@@ -150,6 +150,8 @@ class ProfileView extends GetView<ProfileController> {
           _buildSubscriptionCard(),
           SizedBox(height: 16.h),
           _buildAssessmentCard(),
+          SizedBox(height: 16.h),
+          _buildLogoutButton(),
           SizedBox(height: 32.h),
         ],
       ),
@@ -229,37 +231,92 @@ class ProfileView extends GetView<ProfileController> {
   }
 
   Widget _buildAssessmentCard() {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F0F0F),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
+    return GestureDetector(
+      onTap: controller.retakeAssessment,
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: const Color(0xFF0F0F0F),
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(16.w),
+          child: Row(
+            children: [
+              Container(
+                width: 32.w,
+                height: 32.h,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFFF8A5B), width: 1.5),
+                  color: Colors.transparent,
+                ),
+                child: Icon(
+                  Icons.person_outline,
+                  color: const Color(0xFFFF8A5B),
+                  size: 18.sp,
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Text(
+                  'Retake baseline assessment',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'IBM Plex Sans',
+                    fontWeight: FontWeight.w400,
+                    fontSize: 13.sp,
+                    height: 1.5,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: Colors.white,
+                size: 16.sp,
+              ),
+            ],
+          ),
+        ),
       ),
-      child: Padding(
-        padding: EdgeInsets.all(16.w),
-        child: Row(
-          children: [
-            Container(
-              width: 32.w,
-              height: 32.h,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFFF8A5B), width: 1.5),
-                color: Colors.transparent,
+    );
+  }
+
+  Widget _buildLogoutButton() {
+    return GestureDetector(
+      onTap: controller.logout,
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: const Color(0xFF0F0F0F),
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(16.w),
+          child: Row(
+            children: [
+              Container(
+                width: 32.w,
+                height: 32.h,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFFF5B5B), width: 1.5),
+                  color: Colors.transparent,
+                ),
+                child: Icon(
+                  Icons.logout,
+                  color: const Color(0xFFFF5B5B),
+                  size: 18.sp,
+                ),
               ),
-              child: Icon(
-                Icons.person_outline,
-                color: const Color(0xFFFF8A5B),
-                size: 18.sp,
-              ),
-            ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Text(
-                'Retake baseline assessment',
+              SizedBox(width: 12.w),
+              Text(
+                'Log out',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: const Color(0xFFFF5B5B),
                   fontFamily: 'IBM Plex Sans',
                   fontWeight: FontWeight.w400,
                   fontSize: 13.sp,
@@ -267,13 +324,14 @@ class ProfileView extends GetView<ProfileController> {
                   letterSpacing: 0,
                 ),
               ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios,
-              color: Colors.white,
-              size: 16.sp,
-            ),
-          ],
+              const Spacer(),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: const Color(0xFFFF5B5B),
+                size: 16.sp,
+              ),
+            ],
+          ),
         ),
       ),
     );

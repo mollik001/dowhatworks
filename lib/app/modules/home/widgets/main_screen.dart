@@ -39,6 +39,12 @@ class _MainScreenState extends State<MainScreen> {
     if (!Get.isRegistered<ResultsController>()) {
       Get.put<ResultsController>(ResultsController());
     }
+
+    // Keep _selectedIndex in sync with HomeController.selectedTabIndex
+    ever(Get.find<HomeController>().selectedTabIndex, (int index) {
+      if (mounted) setState(() => _selectedIndex = index);
+      if (index == 0) Get.find<HomeController>().fetchData();
+    });
   }
 
   @override
@@ -69,9 +75,7 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: CustomNavBar(
         selectedIndex: _selectedIndex,
         onItemTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
+          Get.find<HomeController>().switchTab(index);
         },
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../data/models/experiment_models.dart';
 import '../../../data/repositories/experiment_repository.dart';
+import '../../home/controllers/home_controller.dart';
 import '../../results/controllers/results_controller.dart';
 
 class ExperimentDetailController extends GetxController {
@@ -187,6 +188,14 @@ class ExperimentDetailController extends GetxController {
         aiAnalysis: d.aiAnalysis,
         createdAt: d.createdAt,
       );
+
+      // Refresh results list and home stats
+      if (Get.isRegistered<ResultsController>()) {
+        Get.find<ResultsController>().loadExperiments();
+      }
+      if (Get.isRegistered<HomeController>()) {
+        Get.find<HomeController>().fetchData();
+      }
 
       Get.back(); // close the bottom sheet
       Get.snackbar(

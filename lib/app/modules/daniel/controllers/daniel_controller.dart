@@ -7,7 +7,18 @@ class DanielController extends GetxController {
   final _repo = ChatRepository();
 
   final messageController = TextEditingController();
-  final scrollController = ScrollController();
+
+  // ScrollController is owned by the chat screen widget, not this controller.
+  // The screen attaches/detaches it so we never hold a stale reference.
+  ScrollController? _scrollController;
+
+  void attachScrollController(ScrollController sc) {
+    _scrollController = sc;
+  }
+
+  void detachScrollController() {
+    _scrollController = null;
+  }
 
   final currentSession = Rxn<ChatSession>();
   final messages = <ChatMessage>[].obs;
@@ -47,7 +58,6 @@ class DanielController extends GetxController {
   @override
   void onClose() {
     messageController.dispose();
-    scrollController.dispose();
     super.onClose();
   }
 
@@ -181,9 +191,10 @@ class DanielController extends GetxController {
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (scrollController.hasClients) {
-        scrollController.animateTo(
-          scrollController.position.maxScrollExtent + 200,
+      final sc = _scrollController;
+      if (sc != null && sc.hasClients) {
+        sc.animateTo(
+          sc.position.maxScrollExtent + 200,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );

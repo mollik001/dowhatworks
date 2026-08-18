@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-class CustomTextField extends StatelessWidget {
+class CustomTextField extends StatefulWidget {
   final String hintText;
   final String iconPath;
   final bool isPassword;
@@ -18,6 +18,13 @@ class CustomTextField extends StatelessWidget {
   });
 
   @override
+  State<CustomTextField> createState() => _CustomTextFieldState();
+}
+
+class _CustomTextFieldState extends State<CustomTextField> {
+  bool _obscureText = true;
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
@@ -29,16 +36,16 @@ class CustomTextField extends StatelessWidget {
           Padding(
             padding: EdgeInsets.all(12.w),
             child: Image.asset(
-              iconPath,
+              widget.iconPath,
               width: 20.w,
               height: 20.w,
             ),
           ),
           Expanded(
             child: TextField(
-              controller: controller,
-              keyboardType: keyboardType ?? TextInputType.text,
-              obscureText: isPassword,
+              controller: widget.controller,
+              keyboardType: widget.keyboardType ?? TextInputType.text,
+              obscureText: widget.isPassword ? _obscureText : false,
               style: TextStyle(
                 fontFamily: 'IBM Plex Sans',
                 fontWeight: FontWeight.w400,
@@ -46,7 +53,7 @@ class CustomTextField extends StatelessWidget {
                 color: Colors.white,
               ),
               decoration: InputDecoration(
-                hintText: hintText,
+                hintText: widget.hintText,
                 hintStyle: TextStyle(
                   fontFamily: 'IBM Plex Sans',
                   fontWeight: FontWeight.w400,
@@ -58,6 +65,18 @@ class CustomTextField extends StatelessWidget {
               ),
             ),
           ),
+          if (widget.isPassword)
+            GestureDetector(
+              onTap: () => setState(() => _obscureText = !_obscureText),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12.w),
+                child: Icon(
+                  _obscureText ? Icons.visibility_off : Icons.visibility,
+                  color: const Color(0xFF888888),
+                  size: 20.w,
+                ),
+              ),
+            ),
         ],
       ),
     );

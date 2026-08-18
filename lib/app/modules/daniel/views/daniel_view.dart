@@ -86,25 +86,57 @@ class _LandingScreen extends StatelessWidget {
 // CHAT SCREEN
 // =============================================================================
 
-class _ChatScreen extends StatelessWidget {
+class _ChatScreen extends StatefulWidget {
   final DanielController controller;
   const _ChatScreen({required this.controller});
+
+  @override
+  State<_ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<_ChatScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Hand the local controller to DanielController so it can scroll
+    widget.controller.attachScrollController(_scrollController);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+  }
+
+  @override
+  void dispose() {
+    widget.controller.detachScrollController();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent + 200,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _Header(controller: controller, showHistory: true, showBack: true),
+        _Header(controller: widget.controller, showHistory: true, showBack: true),
         _Divider(),
         Expanded(
           child: Obx(() {
-            final msgs = controller.messages;
+            final msgs = widget.controller.messages;
+            WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
             return ListView.builder(
-              controller: controller.scrollController,
+              controller: _scrollController,
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-              itemCount: msgs.length + (controller.isSending.value ? 1 : 0),
+              itemCount: msgs.length + (widget.controller.isSending.value ? 1 : 0),
               itemBuilder: (context, index) {
-                // Typing indicator at the end
                 if (index == msgs.length) return _TypingIndicator();
                 return _MessageBubble(message: msgs[index]);
               },
@@ -112,8 +144,8 @@ class _ChatScreen extends StatelessWidget {
           }),
         ),
         _InputBar(
-          controller: controller,
-          onSend: controller.sendMessage,
+          controller: widget.controller,
+          onSend: widget.controller.sendMessage,
         ),
         SizedBox(height: MediaQuery.of(context).viewInsets.bottom > 0 ? 8.h : 16.h),
       ],

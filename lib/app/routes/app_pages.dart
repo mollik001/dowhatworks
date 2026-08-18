@@ -21,8 +21,10 @@ import '../modules/auth/views/reset_password_view.dart';
 import '../modules/auth/views/signin_view.dart';
 import '../modules/auth/views/signup_view.dart';
 import '../modules/home/widgets/main_screen.dart';
-import '../modules/home/bindings/home_binding.dart';
-import '../modules/home/views/home_view.dart';
+import '../modules/home/controllers/home_controller.dart';
+import '../modules/daniel/controllers/daniel_controller.dart';
+import '../modules/lab/controllers/lab_controller.dart';
+import '../modules/results/controllers/results_controller.dart';
 import '../modules/onboarding/bindings/onboarding_binding.dart';
 import '../modules/onboarding/views/onboarding_view.dart';
 import '../modules/questionnaire/bindings/questionnaire_binding.dart';
@@ -90,24 +92,48 @@ class AppPages {
     GetPage(
       name: AppRoutes.home,
       page: () => const MainScreen(initialIndex: 0),
+      binding: BindingsBuilder(() {
+        if (!Get.isRegistered<HomeController>()) Get.lazyPut(() => HomeController());
+        if (!Get.isRegistered<DanielController>()) Get.lazyPut(() => DanielController());
+        if (!Get.isRegistered<LabController>()) Get.lazyPut(() => LabController());
+        if (!Get.isRegistered<ResultsController>()) Get.lazyPut(() => ResultsController());
+      }),
       transition: Transition.fadeIn,
       transitionDuration: const Duration(milliseconds: 300),
     ),
     GetPage(
       name: AppRoutes.daniel,
       page: () => const MainScreen(initialIndex: 1),
+      binding: BindingsBuilder(() {
+        if (!Get.isRegistered<HomeController>()) Get.lazyPut(() => HomeController());
+        if (!Get.isRegistered<DanielController>()) Get.lazyPut(() => DanielController());
+        if (!Get.isRegistered<LabController>()) Get.lazyPut(() => LabController());
+        if (!Get.isRegistered<ResultsController>()) Get.lazyPut(() => ResultsController());
+      }),
       transition: Transition.fadeIn,
       transitionDuration: const Duration(milliseconds: 250),
     ),
     GetPage(
       name: AppRoutes.lab,
       page: () => const MainScreen(initialIndex: 2),
+      binding: BindingsBuilder(() {
+        if (!Get.isRegistered<HomeController>()) Get.lazyPut(() => HomeController());
+        if (!Get.isRegistered<DanielController>()) Get.lazyPut(() => DanielController());
+        if (!Get.isRegistered<LabController>()) Get.lazyPut(() => LabController());
+        if (!Get.isRegistered<ResultsController>()) Get.lazyPut(() => ResultsController());
+      }),
       transition: Transition.fadeIn,
       transitionDuration: const Duration(milliseconds: 250),
     ),
     GetPage(
       name: AppRoutes.results,
       page: () => const MainScreen(initialIndex: 3),
+      binding: BindingsBuilder(() {
+        if (!Get.isRegistered<HomeController>()) Get.lazyPut(() => HomeController());
+        if (!Get.isRegistered<DanielController>()) Get.lazyPut(() => DanielController());
+        if (!Get.isRegistered<LabController>()) Get.lazyPut(() => LabController());
+        if (!Get.isRegistered<ResultsController>()) Get.lazyPut(() => ResultsController());
+      }),
       transition: Transition.fadeIn,
       transitionDuration: const Duration(milliseconds: 250),
     ),

@@ -35,6 +35,15 @@ class StorageService {
     return _prefs?.getBool(ApiConstants.onboardingCompletedKey) ?? false;
   }
 
+  static Future<bool> setHasSeenOnboarding() async {
+    final prefs = _prefs ?? await SharedPreferences.getInstance();
+    return await prefs.setBool(ApiConstants.hasSeenOnboardingKey, true);
+  }
+
+  static bool getHasSeenOnboarding() {
+    return _prefs?.getBool(ApiConstants.hasSeenOnboardingKey) ?? false;
+  }
+
   static Future<bool> clearTokens() async {
     final prefs = _prefs ?? await SharedPreferences.getInstance();
     await prefs.remove(ApiConstants.accessTokenKey);

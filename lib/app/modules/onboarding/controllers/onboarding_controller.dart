@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:dowhatworks/app/data/services/storage_service.dart';
 import 'package:dowhatworks/app/routes/app_routes.dart';
 
 class OnboardingController extends GetxController {
@@ -17,7 +18,7 @@ class OnboardingController extends GetxController {
         curve: Curves.easeInOut,
       );
     } else {
-      Get.offAllNamed(AppRoutes.authSignup);
+      _finishOnboarding();
     }
   }
 
@@ -31,7 +32,18 @@ class OnboardingController extends GetxController {
   }
 
   void skip() {
-    Get.offAllNamed(AppRoutes.authSignup);
+    _finishOnboarding();
+  }
+
+  void _finishOnboarding() {
+    final isFirstTime = !StorageService.getHasSeenOnboarding();
+    StorageService.setHasSeenOnboarding();
+
+    if (isFirstTime) {
+      Get.offAllNamed(AppRoutes.authSignup);
+    } else {
+      Get.offAllNamed(AppRoutes.authSignin);
+    }
   }
 
   @override

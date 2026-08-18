@@ -35,14 +35,3 @@ Onboarding game.
 `
  */
 
-//  {
-//             "id": 12,
-//             "date": "2026-08-13",
-//             "completed": "pending",
-//             "metric_value": 5.0,
-//             "logged_metrics": {},
-//             "notes": "",
-//             "daily_observation": "",
-//             "ai_suggestion": "Spend 15 focused minutes working on a task tonight to test your night productivity.",
-//             "created_at": "2026-08-13T09:41:48.594077Z"
-//         }

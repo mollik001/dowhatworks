@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/storage_service.dart';
+import '../../../data/services/user_service.dart';
 import '../../../routes/app_routes.dart';
 
 class OtpController extends GetxController {
@@ -12,7 +14,6 @@ class OtpController extends GetxController {
 
   final isLoading = false.obs;
   final email = ''.obs;
-  final isForgotPassword = false.obs;
 
   @override
   void onInit() {
@@ -20,7 +21,6 @@ class OtpController extends GetxController {
     if (Get.arguments != null && Get.arguments is Map) {
       final map = Get.arguments as Map;
       email.value = map['email'] ?? '';
-      isForgotPassword.value = (map['isForgotPassword'] == true) || (map['nextRoute'] == AppRoutes.authResetPassword);
     }
   }
 
@@ -42,38 +42,26 @@ class OtpController extends GetxController {
       final dynamic otpCode = int.tryParse(otpString) ?? otpString;
 
       final response = await _authRepository.verifyOtp(
-        email: email.value.isNotEmpty ? email.value : 'hasanfaysal33@gmail.com',
+        email: email.value.isNotEmpty ? email.value : '',
         otpCode: otpCode,
       );
 
-      final String? token = response['token'] ??
-          response['reset_token'] ??
-          response['access_token'] ??
-          response['access'] ??
-          response['data']?['token'] ??
-          response['data']?['access_token'];
+      // OTP is only used for signup verification
+      final userMap = response['user'] as Map<String, dynamic>? ??
+          (response['data'] is Map
+              ? (response['data']['user'] as Map<String, dynamic>?)
+              : null);
 
-      if (isForgotPassword.value) {
-        Get.toNamed(
-          AppRoutes.authResetPassword,
-          arguments: {
-            'email': email.value,
-            'token': token,
-          },
-        );
+      final bool hasCompletedOnboarding =
+          (userMap?['has_completed_onboarding'] == true) ||
+              (response['has_completed_onboarding'] == true) ||
+              StorageService.getHasCompletedOnboarding();
+
+      if (hasCompletedOnboarding) {
+        unawaited(UserService.to.fetchProfile());
+        Get.offAllNamed(AppRoutes.home);
       } else {
-        final userMap = response['user'] as Map<String, dynamic>? ??
-            (response['data'] is Map ? (response['data']['user'] as Map<String, dynamic>?) : null);
-
-        final bool hasCompletedOnboarding = (userMap?['has_completed_onboarding'] == true) ||
-            (response['has_completed_onboarding'] == true) ||
-            StorageService.getHasCompletedOnboarding();
-
-        if (hasCompletedOnboarding) {
-          Get.offAllNamed(AppRoutes.home);
-        } else {
-          Get.offAllNamed(AppRoutes.questionnaire);
-        }
+        Get.offAllNamed(AppRoutes.questionnaire);
       }
     } catch (e) {
       Get.snackbar(

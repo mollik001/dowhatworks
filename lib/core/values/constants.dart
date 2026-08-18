@@ -26,9 +26,11 @@ class ApiConstants {
   static String chatSession(int sessionId) => '/api/v1/chat/sessions/$sessionId/';
   static String chatMessages(int sessionId) => '/api/v1/chat/sessions/$sessionId/messages/';
   static String chatAsk(int sessionId) => '/api/v1/chat/sessions/$sessionId/ask/';
+  static const String baselineHistory = '/api/v1/auth/baseline-history/';
 
   static const String accessTokenKey = 'access_token';
   static const String refreshTokenKey = 'refresh_token';
   static const String onboardingCompletedKey = 'has_completed_onboarding';
+  static const String hasSeenOnboardingKey = 'has_seen_onboarding';
 }
 
